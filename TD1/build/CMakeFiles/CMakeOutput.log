@@ -694,3 +694,55 @@ Linking C executable cmTC_b1ec2
 make[1] : on quitte le répertoire « /autofs/netapp/account/cremi/jimgouraud/SIA/TD1/build/CMakeFiles/CMakeTmp »
 
 
+Performing C SOURCE FILE Test OpenMP_FLAG_DETECTED succeeded with the following output:
+Change Dir: /net/cremi/jimgouraud/SIA/TD1/build/CMakeFiles/CMakeTmp
+
+Run Build Command:"/usr/bin/make" "cmTC_4a314/fast"
+make[1] : on entre dans le répertoire « /autofs/netapp/account/cremi/jimgouraud/SIA/TD1/build/CMakeFiles/CMakeTmp »
+/usr/bin/make -f CMakeFiles/cmTC_4a314.dir/build.make CMakeFiles/cmTC_4a314.dir/build
+make[2] : on entre dans le répertoire « /autofs/netapp/account/cremi/jimgouraud/SIA/TD1/build/CMakeFiles/CMakeTmp »
+Building C object CMakeFiles/cmTC_4a314.dir/src.c.o
+/usr/bin/cc    -DOpenMP_FLAG_DETECTED -fopenmp   -o CMakeFiles/cmTC_4a314.dir/src.c.o   -c /net/cremi/jimgouraud/SIA/TD1/build/CMakeFiles/CMakeTmp/src.c
+Linking C executable cmTC_4a314
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_4a314.dir/link.txt --verbose=1
+/usr/bin/cc   -DOpenMP_FLAG_DETECTED -fopenmp    CMakeFiles/cmTC_4a314.dir/src.c.o  -o cmTC_4a314 -rdynamic 
+make[2] : on quitte le répertoire « /autofs/netapp/account/cremi/jimgouraud/SIA/TD1/build/CMakeFiles/CMakeTmp »
+make[1] : on quitte le répertoire « /autofs/netapp/account/cremi/jimgouraud/SIA/TD1/build/CMakeFiles/CMakeTmp »
+
+Source file was:
+
+#include <omp.h>
+int main() {
+#ifdef _OPENMP
+  return 0;
+#else
+  breaks_on_purpose
+#endif
+}
+
+Performing C++ SOURCE FILE Test OpenMP_FLAG_DETECTED succeeded with the following output:
+Change Dir: /net/cremi/jimgouraud/SIA/TD1/build/CMakeFiles/CMakeTmp
+
+Run Build Command:"/usr/bin/make" "cmTC_d8344/fast"
+make[1] : on entre dans le répertoire « /autofs/netapp/account/cremi/jimgouraud/SIA/TD1/build/CMakeFiles/CMakeTmp »
+/usr/bin/make -f CMakeFiles/cmTC_d8344.dir/build.make CMakeFiles/cmTC_d8344.dir/build
+make[2] : on entre dans le répertoire « /autofs/netapp/account/cremi/jimgouraud/SIA/TD1/build/CMakeFiles/CMakeTmp »
+Building CXX object CMakeFiles/cmTC_d8344.dir/src.cxx.o
+/usr/bin/c++     -std=c++14 -fvisibility=hidden -Wall -Wextra -Wno-unused-parameter -DOpenMP_FLAG_DETECTED -fopenmp   -o CMakeFiles/cmTC_d8344.dir/src.cxx.o -c /net/cremi/jimgouraud/SIA/TD1/build/CMakeFiles/CMakeTmp/src.cxx
+Linking CXX executable cmTC_d8344
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_d8344.dir/link.txt --verbose=1
+/usr/bin/c++    -std=c++14 -fvisibility=hidden -Wall -Wextra -Wno-unused-parameter -DOpenMP_FLAG_DETECTED -fopenmp    CMakeFiles/cmTC_d8344.dir/src.cxx.o  -o cmTC_d8344 -rdynamic 
+make[2] : on quitte le répertoire « /autofs/netapp/account/cremi/jimgouraud/SIA/TD1/build/CMakeFiles/CMakeTmp »
+make[1] : on quitte le répertoire « /autofs/netapp/account/cremi/jimgouraud/SIA/TD1/build/CMakeFiles/CMakeTmp »
+
+Source file was:
+
+#include <omp.h>
+int main() {
+#ifdef _OPENMP
+  return 0;
+#else
+  breaks_on_purpose
+#endif
+}
+
