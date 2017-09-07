@@ -1,0 +1,40 @@
+file(REMOVE_RECURSE
+  "CMakeFiles/sia_raytracer.dir/src/common.cpp.o"
+  "CMakeFiles/sia_raytracer.dir/src/viewer.cpp.o"
+  "CMakeFiles/sia_raytracer.dir/src/bitmap.cpp.o"
+  "CMakeFiles/sia_raytracer.dir/src/block.cpp.o"
+  "CMakeFiles/sia_raytracer.dir/src/mesh.cpp.o"
+  "CMakeFiles/sia_raytracer.dir/src/camera.cpp.o"
+  "CMakeFiles/sia_raytracer.dir/src/trackball.cpp.o"
+  "CMakeFiles/sia_raytracer.dir/src/main.cpp.o"
+  "CMakeFiles/sia_raytracer.dir/src/object.cpp.o"
+  "CMakeFiles/sia_raytracer.dir/src/shape.cpp.o"
+  "CMakeFiles/sia_raytracer.dir/src/sphere.cpp.o"
+  "CMakeFiles/sia_raytracer.dir/src/quad.cpp.o"
+  "CMakeFiles/sia_raytracer.dir/src/scene.cpp.o"
+  "CMakeFiles/sia_raytracer.dir/src/material.cpp.o"
+  "CMakeFiles/sia_raytracer.dir/src/directionalLight.cpp.o"
+  "CMakeFiles/sia_raytracer.dir/src/pointLight.cpp.o"
+  "CMakeFiles/sia_raytracer.dir/src/plane.cpp.o"
+  "CMakeFiles/sia_raytracer.dir/src/phong.cpp.o"
+  "CMakeFiles/sia_raytracer.dir/src/bvh.cpp.o"
+  "CMakeFiles/sia_raytracer.dir/src/parser.cpp.o"
+  "CMakeFiles/sia_raytracer.dir/src/proplist.cpp.o"
+  "CMakeFiles/sia_raytracer.dir/src/direct.cpp.o"
+  "CMakeFiles/sia_raytracer.dir/src/normals.cpp.o"
+  "CMakeFiles/sia_raytracer.dir/src/flat.cpp.o"
+  "CMakeFiles/sia_raytracer.dir/src/texcoords.cpp.o"
+  "CMakeFiles/sia_raytracer.dir/src/whitted.cpp.o"
+  "CMakeFiles/sia_raytracer.dir/src/ward.cpp.o"
+  "CMakeFiles/sia_raytracer.dir/src/lightProbe.cpp.o"
+  "CMakeFiles/sia_raytracer.dir/src/areaLight.cpp.o"
+  "CMakeFiles/sia_raytracer.dir/src/warp.cpp.o"
+  "CMakeFiles/sia_raytracer.dir/src/ao.cpp.o"
+  "sia_raytracer.pdb"
+  "sia_raytracer"
+)
+
+# Per-language clean rules from dependency scanning.
+foreach(lang CXX)
+  include(CMakeFiles/sia_raytracer.dir/cmake_clean_${lang}.cmake OPTIONAL)
+endforeach()

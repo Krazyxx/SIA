@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<scene>
+ <color name="background" value="0.2, 0.2, 0.2"/>
+
+ <integrator type="direct"/>
+
+ <camera type="perspective">
+   <float name="fieldOfView" value="90.0" /> 
+   <integer name="width" value="512"/>
+   <integer name="height" value="512"/>
+   <integer name="samples" value="8"/>
+   <transform name="toWorld">
+     <lookat origin="0.4, 0.4, 0.4" target="0, 0, 0" up="0, 1, 0"/>
+   </transform>
+ </camera>
+
+ <shape type="sphere">
+   <float name="radius" value="0.4"/>
+   <material type="ward">
+     <color name="diffuse" value="0.2, 0.2, 0.2" />
+     <color name="specular" value="0.7, 0.7, 0.7" />
+     <float name="alphaX" value="0.1"/>
+     <float name="alphaY" value="0.5"/>
+   </material>
+ </shape>
+
+ <light type="directionalLight">
+   <vector name="direction" value="0.0, -1.0, 0.0" />
+   <color name="intensity" value="0.6, 0.6, 0.6" />
+ </light>
+
+</scene>
