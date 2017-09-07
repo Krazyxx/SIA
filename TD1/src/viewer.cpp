@@ -284,15 +284,19 @@ void renderBlock(Scene* scene, ImageBlock& block)
 
     /* For each pixel and pixel sample */
     for (int y=0; y<size.y(); ++y) {
-        for (int x=0; x<size.x(); ++x) {
+      for (int x=0; x<size.x(); ++x) {
+	for (int i = 0; i < camera->sampleCount(); i++) {
+	  for (int j = 0; j < camera->sampleCount(); j++) {
             // compute the primary ray parameters
             Ray ray;
             ray.origin = camera->position();
-            ray.direction = (camF + camX * (2.0*float(x + 0.5f + offset[0])/float(camera->vpWidth())  - 1.)
-                                  - camY * (2.0*float(y + 0.5f + offset[1])/float(camera->vpHeight()) - 1.)).normalized();
+            ray.direction = (camF + camX * (2.0*float(x + i/((double) camera->sampleCount()) + offset[0])/float(camera->vpWidth())  - 1.)
+			          - camY * (2.0*float(y + j/((double) camera->sampleCount()) + offset[1])/float(camera->vpHeight()) - 1.)).normalized();
 
             block.put(Vector2f(x+offset[0], y+offset[1]), integrator->Li(scene,ray));
-        }
+	  }
+	}
+      }
     }
 }
 
