@@ -1,0 +1,81 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>SIA - Gouraud Jimmy</title>
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/github-gist.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+    <script>hljs.initHighlightingOnLoad();</script>
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+    <script src="toc.min.js"></script>
+
+    <script type="text/javascript" async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+	MathJax.Hub.Config({
+	tex2jax: {
+        inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+        displayMath: [ ['$$','$$'], ["\\[","\\]"] ],
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre']
+	}
+	});
+	MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax(), i;
+        for(i=0; i < all.length; i += 1) {
+		     all[i].SourceElement().parentNode.className += ' has-jax';
+		     }
+		     });
+    </script>
+
+    <link rel="stylesheet" href="style.css">
+
+  </head>
+      
+  <body>
+
+    <div id="toc"></div>
+
+    <div id="content">
+
+      <h1>SIA - Gouraud Jimmy</h1>
+
+      <h2>TD 1 - Échantillonnage</h2>
+
+      <h3>1. Intégration de Monte-Carlo 1D</h3>
+
+      <h3>2. Anti-Aliasing</h3>
+      <h4>2.1. Échantillonnage régulier</h4>
+      <h4>2.2. Échantillonnage stratifié</h4>
+ 
+
+      <figure>
+	<img src="troisSpheres.png" width="400" alt="trois spheres" />
+	<figcaption>Une légende</figcaption>
+      </figure>
+
+      <p>Test MathJax : $n-1$</p>
+
+    </div>
+
+    <script type="text/javascript">
+      $('#toc').toc({
+      'selectors': 'h2,h3,h4', //elements to use as headings
+      'container': 'body', //element to find all selectors in
+      'smoothScrolling': true, //enable or disable smooth scrolling on click
+      'prefix': 'toc', //prefix for anchor tags and class names
+      'onHighlight': function(el) {}, //called when a new section is highlighted 
+      'highlightOnScroll': true, //add class to heading that is currently in focus
+      'highlightOffset': 100, //offset to trigger the next headline
+      'anchorName': function(i, heading, prefix) { //custom function for anchor name
+      return prefix+i;
+      },
+      'headerText': function(i, heading, $heading) { //custom function building the header-item text
+      return $heading.text();
+      },
+      'itemClass': function(i, heading, $heading, prefix) { // custom function for item class
+      return $heading[0].tagName.toLowerCase();
+      }
+      });
+    </script>
+
+  </body>
