@@ -28,6 +28,7 @@
     </script>
 
     <link rel="stylesheet" href="style.css">
+      
 
   </head>
       
@@ -42,18 +43,56 @@
       <h2>TD 1 - Échantillonnage</h2>
 
       <h3>1. Intégration de Monte-Carlo 1D</h3>
+      <p>
+	La méthode de Monte-Carlo consiste à calculer une valeur numérique en l'approchant à l'aide de procédés aléatoire : elle va estimer cette valeur. <br>
+	Estimation de $I=\int_a^b f(x) \, dx$ à l'aide de $N$ échantillons tirés aléatoirement dans $[a,b]$ selon la densité $p(x)$:
+	$$\langle I^N \rangle = \frac{1}{N} \sum_{i=0}^{N-1} \frac{f(x_i)}{p(x_i)}$$
+	<br>
+	  
+	Ici, nous souhaitons calculer l'intégrale de la fonction 1D : $f(x) = 5x^4$ sur l'intervalle $[0,1]$, c'est-à-dire $I=\int_0^1 5x^4 \, dx$. Pour cela nous allons calculer l'estimation de l'intégral à l'aide de l'estimateur de Monte-Carlo $\langle I \rangle$ avec une densité de probabilité uniforme $(\forall i,~pdf(x_i)=1)$, soit :
+	$$\langle I \rangle = \frac{1}{N} \sum_{i=1}^N \frac{f(x_i)}{pdf(x_i)} = \frac{1}{N} \sum_{i=1}^N 5x_i^4$$
+
+	L'erreur d'estimation correspond à la différence entre la valeur estimée et la valeur réelle :
+	$$erreur\ d'estimation = I - \langle I \rangle$$
+	<figure>
+	  <img src="TD1/image/1. Erreur d'estimation.png" width="450" alt="Erreur d'estimation en fonction du nombre d'échantillons."/>
+	  <figcaption>Erreur d'estimation en fonction du nombre d'échantillons.</figcaption>
+	</figure>
+
+	On calcule ensuite la variance et l'écartype analyptique, sachant que l'écart-type $\sigma$ correspond à la racine carrée de la variance $V = \sigma^2$ :
+	$$\sigma^2_{est} = \frac{1}{N} \int_0^1 \left(\frac{f(x)}{pdf(x)} - I \right)^2 pdf(x) dx = \frac{1}{N} \int_0^1 (5x^4 - 1)^2 dx$$
+
+	<figure>
+	  <img src="TD1/image/1. Variance et écart-type analyptique.png" width="450" alt="Variance et écart-type analyptique en fonction du nombre d'échantillons."/>
+	  <figcaption>Variance et écart-type analyptique en fonction du nombre d'échantillons.</figcaption>
+	</figure>
+
+	Puis on calcule la variance et l'écart-type numérique :
+	$$\langle \sigma^2_{est} \rangle = \frac{1}{N-1} \left\{ \frac{1}{N} \sum_{i=1}^N \left(\frac{f(x_i)}{pdf(x_i)}\right)^2 - \left( \frac{1}{N} \sum_{i=1}^N \frac{f(x_i)}{pdf(x_i)}\right)^2 \right\}$$
+	<figure>
+	  <img src="TD1/image/1. Variance et écart-type numérique.png" width="450" alt="Variance et écart-type numérique en fonction du nombre d'échantillons."/>
+	  <figcaption>Variance et écart-type numérique en fonction du nombre d'échantillons.</figcaption>
+	</figure>
+
+	On affiche l'erreur d'estimation, l'écart-type numérique et analyptique en fonction du nombre d'échantillons : 
+	<figure>
+	  <img src="TD1/image/1. Erreur d'estimation, variance analytique et numérique.png" width="450" alt="Erreur d'estimation, variance analytique et numérique en fonction du nombre d'échantillons."/>
+	  <figcaption>Erreur d'estimation, variance analytique et numérique en fonction du nombre d'échantillons.</figcaption>
+	</figure>
 
       <h3>2. Anti-Aliasing</h3>
       <h4>2.1. Échantillonnage régulier</h4>
       <h4>2.2. Échantillonnage stratifié</h4>
- 
+      <h4>2.3. Bonus : filtre de reconstruction</h4>
 
-      <figure>
-	<img src="troisSpheres.png" width="400" alt="trois spheres" />
-	<figcaption>Une légende</figcaption>
-      </figure>
+      <h3>3. Sources étendues</h3>
+      <h4>3.1. Échantillonnage de Monte-Carlo</h4>
+      <h4>3.2. Source texturée</h4>
+      <h4>3.3. Bonus : échantillonage stratifié</h4>
 
-      <p>Test MathJax : $n-1$</p>
+      <h3>4. Ambiante Occlusion</h3>
+      <h4>4.1. Échantillonnage d'un hémisphère</h4>
+      <h4>4.2. CAlcul de l'AO</h4>
 
     </div>
 

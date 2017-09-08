@@ -35,11 +35,12 @@ int main()
     
     x.push_back(n);
     err.push_back(fabs(mc-1.0));
-    var_va.push_back(va);        // variance analyptique
-    var_ea.push_back(sqrt(va));  // écart-type analyptique
+    
+    var_va.push_back(va);           // variance analyptique
+    var_ea.push_back(sqrt(va));     // écart-type analyptique
 
-    var_vn.push_back(varest);
-    var_en.push_back(sqrt(varest));
+    var_vn.push_back(varest);       // variance numérique
+    var_en.push_back(sqrt(varest)); // écart-type numérique
   }
 
   g.reset_plot();
