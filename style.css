@@ -20,6 +20,7 @@ body {
 pre, code, tt {
 	margin: 0;	
 	font-family: Monaco
+	color: #4A6;
 }
 
 figure {
