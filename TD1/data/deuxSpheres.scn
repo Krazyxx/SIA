@@ -13,7 +13,7 @@
    <float name="fieldOfView" value="30.0" /> 
    <integer name="width" value="600"/>
    <integer name="height" value="400"/>
-   <integer name="samples" value="128"/>
+   <integer name="samples" value="32"/>
    <boolean name="stratified" value="true"/>
    <transform name="toWorld">
       <lookat target="2, 0, 0.5"  origin="7, 0, 2" up="0, 0, 1"/>

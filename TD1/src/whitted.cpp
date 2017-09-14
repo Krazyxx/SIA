@@ -1,6 +1,7 @@
 #include "integrator.h"
 #include "scene.h"
 #include "material.h"
+#include "areaLight.h"
 
 class Whitted : public Integrator
 {
@@ -31,24 +32,40 @@ public:
             const LightList &lights = scene->lightList();
             for(LightList::const_iterator it=lights.begin(); it!=lights.end(); ++it)
             {
-                Vector3f lightDir;
-                float dist;
-                Point3f y;
-                lightDir = (*it)->direction(pos, &dist);
-                Ray shadow_ray(pos + normal*Epsilon, lightDir, true);
-                Hit shadow_hit;
-                scene->intersect(shadow_ray,shadow_hit);
-                Color3f attenuation = Color3f(1.f);
-                if(shadow_hit.t()<dist){
-                    if(!shadow_hit.shape()->isEmissive())
-                        attenuation = 0.5f * shadow_hit.shape()->material()->transmissivness();
-                    if((attenuation <= 1e-6).all())
-                        continue;
-                }
+	      Vector3f lightDir;
+	      float dist;
 
-                float cos_term = std::max(0.f,lightDir.dot(normal));
-                Color3f brdf = material->brdf(-ray.direction, lightDir, normal, hit.texcoord());
-                radiance += (*it)->intensity(pos) * cos_term * brdf * attenuation;
+	      if(dynamic_cast<const AreaLight*>(*it))
+	      {
+		// source étendue
+		const AreaLight* light = dynamic_cast<const AreaLight*>(*it);
+		
+		float uSize = Eigen::internal::random<float>(0, light->size()[0]);
+		float vSize = Eigen::internal::random<float>(0, light->size()[1]);
+		Point3f uPos = light->position() + uSize * light->uVec() + vSize * light->vVec();
+		
+		lightDir = uPos - pos;
+                dist = lightDir.norm();
+		lightDir = lightDir.normalized();
+	      } else {
+		// lampe ponctuelle ou directionnelle
+                lightDir = (*it)->direction(pos, &dist);
+	      }
+	      
+	      Ray shadow_ray(pos + normal*Epsilon, lightDir, true);
+	      Hit shadow_hit;
+	      scene->intersect(shadow_ray,shadow_hit);
+	      Color3f attenuation = Color3f(1.f);
+	      if(shadow_hit.t()<dist){
+		if(!shadow_hit.shape()->isEmissive())
+		  attenuation = 0.5f * shadow_hit.shape()->material()->transmissivness();
+		if((attenuation <= 1e-6).all())
+		  continue;
+	      }
+
+	      float cos_term = std::max(0.f,lightDir.dot(normal));
+	      Color3f brdf = material->brdf(-ray.direction, lightDir, normal, hit.texcoord());
+	      radiance += (*it)->intensity(pos) * cos_term * brdf * attenuation;
             }
 
             // reflexions

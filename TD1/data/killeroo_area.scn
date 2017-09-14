@@ -10,7 +10,8 @@
 		<float name="fieldOfView" value="40"/>
 		<integer name="width" value="700"/>
 		<integer name="height" value="600"/>
-		<integer name="samples" value="8" />
+		<integer name="samples" value="8"/>
+		<boolean name="stratified" value="true"/>
 	</camera>
 
 	<shape type="mesh">
