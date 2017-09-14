@@ -28,8 +28,7 @@
     </script>
 
     <link rel="stylesheet" href="style.css">
-      
-
+	
   </head>
       
   <body>
@@ -129,8 +128,21 @@
       <h4>2.3. Bonus : filtre de reconstruction</h4>
       
       <h3>3. Sources étendues</h3>
-      <h4>3.1. Échantillonnage de Monte-Carlo</h4>
       
+      <h4>3.1. Échantillonnage de Monte-Carlo</h4>
+      On va rajouter dans l'intégrateur Whitted, une gestion différentes des lights pour les AreaLight (source lumineuse étendue rectangulaire). <br>
+	Pour cela, on va prendre un point aléatoirement dans l'AreaLight (calculer à l'aide de sa tangente, sa bitangente, son point et sa taille). </br>
+      <br>
+      <code>
+	const AreaLight* light = dynamic_cast<const AreaLight*>(*it); <br><br>
+	  
+	float uSize = Eigen::internal::random<float>(0, light->size()[0]);  <br>
+	float vSize = Eigen::internal::random<float>(0, light->size()[1]);  <br>
+	Point3f uPos = light->position() + uSize * light->uVec() + vSize * light->vVec();  <br>
+      </code>
+      <br>
+      Ensuite on calcule la direction vers ce point (<code>lightDir = uPos - pos</code>) et sa distance (<code>dist = lightDir.norm();</code>).
+  
       <figure>
 	<img src="TD1/image/3.1 killeroo_area-8-stratiffié-0.5.png" width="500" alt="Échantillonnage stratifié source de taille 0.5x0.5 – 8x8 rayons par pixel"/>
 	<figcaption>Échantillonnage stratifié source de taille 0.5x0.5 – 8x8 rayons par pixel</figcaption>
