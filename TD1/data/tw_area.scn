@@ -62,7 +62,8 @@
    </transform>
   </shape>
 
- <light type="areaLight">
+  <light type="areaLight">
+    <string name="texture" value="light_source.exr" />
     <color name="intensity" value="50, 50, 50" />
     <shape type="quad">
       <vector name="size" value="1,1,0" />
@@ -71,7 +72,7 @@
         <translate value="-2.0, 8.0, 6.0"/>
       </transform>
     </shape>
- </light>
+  </light>
 
   <light type="directionalLight">
    <vector name="direction" value="-1.0, 1.0, -1.0" />

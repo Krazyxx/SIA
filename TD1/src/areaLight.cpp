@@ -38,7 +38,29 @@ Color3f AreaLight::intensity(const Point3f &x, const Point3f &y) const {
     float d2 = dir.squaredNorm();
     Color3f intensity = m_intensity / d2;
     if(m_texture) {
-        // TODO
+        Point3f tmp = y-position();
+        tmp += (size()[0]/2) * uVec();
+        tmp += (size()[1]/2) * vVec();
+
+        float angleU = acos(uVec().dot(Vector3f(1,0,0)));
+        Eigen::Matrix3f matU;
+        matU << cos(angleU), -sin(angleU), 0,
+                sin(angleU),  cos(angleU), 0,
+                          0,            0, 1;
+        tmp = matU * tmp;
+
+        float angleV = acos(vVec().dot(Vector3f(0,1,0)));
+        Eigen::Matrix3f matV;
+        matV << cos(angleV), -sin(angleV), 0,
+                sin(angleV),  cos(angleV), 0,
+                          0,            0, 1;
+        tmp = matV * tmp;
+
+        int x = abs((tmp.x()/size()[0]) * 64);
+        int y = abs((tmp.y()/size()[1]) * 64);
+
+        intensity *= m_texture[0](x,y);
+
     }
     return std::max(0.f,dir.normalized().dot(direction())) * intensity;
 }

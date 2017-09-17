@@ -34,6 +34,7 @@ public:
       {
         Vector3f lightDir;
         float dist;
+        Color3f intensity; // ==== //
 
         if(dynamic_cast<const AreaLight*>(*it))
         {
@@ -47,9 +48,11 @@ public:
           lightDir = uPos - pos;
           dist = lightDir.norm();
           lightDir = lightDir.normalized();
+          intensity = light->intensity(pos, uPos); // ==== //
         } else {
           // lampe ponctuelle ou directionnelle
           lightDir = (*it)->direction(pos, &dist);
+          intensity = (*it)->intensity(pos); // ==== //
         }
 
         Ray shadow_ray(pos + normal*Epsilon, lightDir, true);
@@ -65,7 +68,8 @@ public:
 
         float cos_term = std::max(0.f,lightDir.dot(normal));
         Color3f brdf = material->brdf(-ray.direction, lightDir, normal, hit.texcoord());
-        radiance += (*it)->intensity(pos) * cos_term * brdf * attenuation;
+        radiance += intensity * cos_term * brdf * attenuation;
+        //radiance += (*it)->intensity(pos) * cos_term * brdf * attenuation;
       }
 
       // reflexions

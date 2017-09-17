@@ -28,9 +28,9 @@
     </script>
 
     <link rel="stylesheet" href="style.css">
-	
+
   </head>
-      
+
   <body>
 
     <div id="toc"></div>
@@ -47,7 +47,7 @@
 	Estimation de $I=\int_a^b f(x) \, dx$ à l'aide de $N$ échantillons tirés aléatoirement dans $[a,b]$ selon la densité $p(x)$:
 	$$\langle I^N \rangle = \frac{1}{N} \sum_{i=0}^{N-1} \frac{f(x_i)}{p(x_i)}$$
 	<br>
-	  
+
 	Ici, nous souhaitons calculer l'intégrale de la fonction 1D : $f(x) = 5x^4$ sur l'intervalle $[0,1]$, c'est-à-dire $I=\int_0^1 5x^4 \, dx$. Pour cela nous allons calculer l'estimation de l'intégral à l'aide de l'estimateur de Monte-Carlo $\langle I \rangle$ avec une densité de probabilité uniforme $(\forall i,~pdf(x_i)=1)$, soit :
 	$$\langle I \rangle = \frac{1}{N} \sum_{i=1}^N \frac{f(x_i)}{pdf(x_i)} = \frac{1}{N} \sum_{i=1}^N 5x_i^4$$
 
@@ -73,40 +73,40 @@
 	  <figcaption>Variance et écart-type numérique en fonction du nombre d'échantillons.</figcaption>
 	</figure>
 
-	On affiche l'erreur d'estimation, l'écart-type numérique et analyptique en fonction du nombre d'échantillons : 
+	On affiche l'erreur d'estimation, l'écart-type numérique et analyptique en fonction du nombre d'échantillons :
 	<figure>
 	  <img src="TD1/image/1. Erreur d'estimation, variance analytique et numérique.png" width="450" alt="Erreur d'estimation, variance analytique et numérique en fonction du nombre d'échantillons."/>
 	  <figcaption>Erreur d'estimation, variance analytique et numérique en fonction du nombre d'échantillons.</figcaption>
 	</figure>
       </p>
 
-	
+
       <h3>2. Anti-Aliasing</h3>
-      Pour savoir la couleur des pixels d'une scène 3D, on lance des rayons depuis la caméra au centre du pixel et on le colore par la couleur que le rayon intercepte. Le problème c'est que cela entraîne des problèmes d'alisating. 
-      
+      Pour savoir la couleur des pixels d'une scène 3D, on lance des rayons depuis la caméra au centre du pixel et on le colore par la couleur que le rayon intercepte. Le problème c'est que cela entraîne des problèmes d'alisating.
+
       <figure>
 	<img src="TD1/image/2.0. tw-1 (all).png" width="500" alt="Sans échantillonnage (problèmes d'aliasing)"/>
 	<figcaption>Sans échantillonnage (problèmes d'aliasing)</figcaption>
       </figure>
-      
+
       Pour résoudre ce problème, on va intégre la radiance sur le pixel à l'aide de Monte-Carlo en lançant plusieurs rayons par pixel et en moyennant leur contribution.
 
-      
+
       <h4>2.1. Échantillonnage régulier</h4>
-      Tout d'abord, on va échantilloner le pixel en grille régulière de taille $n \times n$, où $n$ correspon à l'attribut <code>samplecount</code> de la caméra. 
+      Tout d'abord, on va échantilloner le pixel en grille régulière de taille $n \times n$, où $n$ correspon à l'attribut <code>samplecount</code> de la caméra.
       <figure>
 	<img src="TD1/image/2.1. tw-8-regulier (all).png" width="500" alt="Échantillonnage régulier – 8x8 rayons par pixel"/>
 	<figcaption>Échantillonnage régulier – 8x8 rayons par pixel</figcaption>
       </figure>
 
       <h4>2.2. Échantillonnage stratifié</h4>
-       Ensuite, on échantillonne de façon stratifié en ajoutant du <i>jitter</i> à chaque rayon. 
+       Ensuite, on échantillonne de façon stratifié en ajoutant du <i>jitter</i> à chaque rayon.
       <figure>
 	<img src="TD1/image/2.2. tw-8-stratifié (all).png" width="500" alt="Échantillonnage stratifié – 8x8 rayons par pixel"/>
 	<figcaption>Échantillonnage stratifié – 8x8 rayons par pixel</figcaption>
       </figure>
 
-      
+
       <figure>
 	<img src="TD1/image/2.2. deuxSpheres-2-stratifié.png" width="500" alt="Échantillonnage stratifié – 2x2 rayons par pixel"/>
 	<figcaption>Échantillonnage stratifié – 2x2 rayons par pixel</figcaption>
@@ -124,39 +124,67 @@
 	<figcaption>Échantillonnage stratifié – 128x128 rayons par pixel</figcaption>
       </figure>
 
-      
+
       <h4>2.3. Bonus : filtre de reconstruction</h4>
-      
+
       <h3>3. Sources étendues</h3>
-      
+
       <h4>3.1. Échantillonnage de Monte-Carlo</h4>
       On va rajouter dans l'intégrateur Whitted, une gestion différentes des lights pour les AreaLight (source lumineuse étendue rectangulaire). <br>
 	Pour cela, on va prendre un point aléatoirement dans l'AreaLight (calculer à l'aide de sa tangente, sa bitangente, son point et sa taille). </br>
       <br>
       <code>
 	const AreaLight* light = dynamic_cast<const AreaLight*>(*it); <br><br>
-	  
+
 	float uSize = Eigen::internal::random<float>(0, light->size()[0]);  <br>
 	float vSize = Eigen::internal::random<float>(0, light->size()[1]);  <br>
 	Point3f uPos = light->position() + uSize * light->uVec() + vSize * light->vVec();  <br>
       </code>
       <br>
       Ensuite on calcule la direction vers ce point (<code>lightDir = uPos - pos</code>) et sa distance (<code>dist = lightDir.norm();</code>).
-  
+
       <figure>
-	<img src="TD1/image/3.1 killeroo_area-8-stratiffié-0.5.png" width="500" alt="Échantillonnage stratifié source de taille 0.5x0.5 – 8x8 rayons par pixel"/>
-	<figcaption>Échantillonnage stratifié source de taille 0.5x0.5 – 8x8 rayons par pixel</figcaption>
+          <img src="TD1/image/3.1 killeroo_area-8-stratiffié-0.5.png" width="500" alt="Échantillonnage stratifié source de taille 0.5x0.5 – 8x8 rayons par pixel"/>
+          <figcaption>Échantillonnage stratifié source de taille 0.5x0.5 – 8x8 rayons par pixel</figcaption>
       </figure>
-      
+
       <figure>
-	<img src="TD1/image/3.1 killeroo_area-8-stratiffié-0.1.png" width="500" alt="Échantillonnage stratifié source de taille 0.1x0.1 – 8x8 rayons par pixel"/>
-	<figcaption>Échantillonnage stratifié source de taille 0.1x0.1 – 8x8 rayons par pixel</figcaption>
+          <img src="TD1/image/3.1 killeroo_area-8-stratiffié-0.1.png" width="500" alt="Échantillonnage stratifié source de taille 0.1x0.1 – 8x8 rayons par pixel"/>
+          <figcaption>Échantillonnage stratifié source de taille 0.1x0.1 – 8x8 rayons par pixel</figcaption>
       </figure>
-      
+
       <h4>3.2. Source texturée</h4>
-      
-      <h4>3.3. Bonus : échantillonage stratifié</h4>
-      
+      On va cette fois-ci moduler l'intensité de la source étendue à l'aide de la texture suivante :
+      <figure>
+          <img src="TD1/image/3.2 light_source.png" width="75" alt="texture light_source"/>
+          <figcaption>Texture light_source</figcaption>
+      </figure>
+
+      Voic les 4 affichages que l'on peut obtenir séparément à partir de la texture :
+      <figure>
+          <img src="TD1/image/3.2 tw_area-blue.png" width="200" alt="Tw blue"/>
+          <figcaption>Tw blue</figcaption>
+      </figure>
+      <figure>
+          <img src="TD1/image/3.2 tw_area-red.png" width="200" alt="Tw red"/>
+          <figcaption>Tw red</figcaption>
+      </figure>
+      <figure>
+          <img src="TD1/image/3.2 tw_area-green.png" width="200" alt="Tw green"/>
+          <figcaption>Tw green</figcaption>
+      </figure>
+      <figure>
+          <img src="TD1/image/3.2 tw_area-white.png" width="200" alt="Tw white"/>
+          <figcaption>Tw white</figcaption>
+      </figure>
+      Et lorsque l'on module l'intensité par la texture compléte :
+      <figure>
+          <img src="TD1/image/3.2 tw_area-all.png" width="400" alt="Échantillonnage stratifié – 8x8 rayons par pixel – source étendue texturée"/>
+          <figcaption>Échantillonnage stratifié – 8x8 rayons par pixel – source étendue texturée</figcaption>
+      </figure>
+
+      <h4>3.3. Bonus : échantillonnage stratifié</h4>
+
       <h3>4. Ambiante Occlusion</h3>
       <h4>4.1. Échantillonnage d'un hémisphère</h4>
       <h4>4.2. CAlcul de l'AO</h4>
@@ -169,7 +197,7 @@
       'container': 'body', //element to find all selectors in
       'smoothScrolling': true, //enable or disable smooth scrolling on click
       'prefix': 'toc', //prefix for anchor tags and class names
-      'onHighlight': function(el) {}, //called when a new section is highlighted 
+      'onHighlight': function(el) {}, //called when a new section is highlighted
       'highlightOnScroll': true, //add class to heading that is currently in focus
       'highlightOffset': 100, //offset to trigger the next headline
       'anchorName': function(i, heading, prefix) { //custom function for anchor name
