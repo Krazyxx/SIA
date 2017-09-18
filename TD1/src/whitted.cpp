@@ -34,7 +34,7 @@ public:
       {
         Vector3f lightDir;
         float dist;
-        Color3f intensity; // ==== //
+        Color3f intensity;
 
         if(dynamic_cast<const AreaLight*>(*it))
         {
@@ -48,11 +48,11 @@ public:
           lightDir = uPos - pos;
           dist = lightDir.norm();
           lightDir = lightDir.normalized();
-          intensity = light->intensity(pos, uPos); // ==== //
+          intensity = light->intensity(pos, uPos);
         } else {
           // lampe ponctuelle ou directionnelle
           lightDir = (*it)->direction(pos, &dist);
-          intensity = (*it)->intensity(pos); // ==== //
+          intensity = (*it)->intensity(pos);
         }
 
         Ray shadow_ray(pos + normal*Epsilon, lightDir, true);
