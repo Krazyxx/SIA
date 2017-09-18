@@ -18,6 +18,7 @@
 
 #include <warp.h>
 #include <vector.h>
+#include <math.h>
 
 Point2f Warp::squareToUniformSquare(const Point2f &sample) {
     return sample;
@@ -28,6 +29,37 @@ float Warp::squareToUniformSquarePdf(const Point2f &sample) {
 }
 
 Point2f Warp::squareToUniformDisk(const Point2f &sample) {
+
+    float x = (sample.x() - 0.5) * 2;
+    float y = (sample.y() - 0.5) * 2;
+
+    /*
+    float phi, pi = 3.1415, r;
+
+    if (x > -y) {
+        if(x > y) {
+            r = x;
+            phi = pi/4.0 * (y/x);
+        } else {
+            r = y;
+            phi = pi/4.0 * (2 - (x/y));
+        }
+    } else {
+        if(x < y) {
+            r = -x;
+            phi = (pi/4.0) * (4 + (y/x));
+        } else {
+            r = -y;
+            phi = pi/4.0 * (6 - (x/y));
+        }
+    }
+    */
+
+    float r = sqrt(x);
+    float phi = 2 * M_PI * y;
+    float u = r * cos(phi);
+    float v = r * sin(phi);
+    return Point2f(u,v);
     throw RTException("Warp::squareToUniformDisk() is not yet implemented!");
 }
 
