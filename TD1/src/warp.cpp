@@ -28,43 +28,46 @@ float Warp::squareToUniformSquarePdf(const Point2f &sample) {
     return ((sample.array() >= 0).all() && (sample.array() <= 1).all()) ? 1.0f : 0.0f;
 }
 
-Point2f Warp::squareToUniformDisk(const Point2f &sample) {
+Point2f Warp::squareToUniformDisk(const Point2f &sample)
+{
+    // Prise en compte de l'aire
+    float r = sqrt(sample.x());
+    float phi = 2 * M_PI * sample.y();
 
-    float x = (sample.x() - 0.5) * 2;
-    float y = (sample.y() - 0.5) * 2;
+    return Point2f(r * cos(phi), r * sin(phi));
 
     /*
-    float phi, pi = 3.1415, r;
+    // Concentric Map
+    float x = (sample.x() - 0.5) * 2;
+    float y = (sample.y() - 0.5) * 2;
+    float r, phi;
 
     if (x > -y) {
-        if(x > y) {
+        if (x > y) {
             r = x;
-            phi = pi/4.0 * (y/x);
+            phi = (M_PI / 4) * (y/x);
         } else {
             r = y;
-            phi = pi/4.0 * (2 - (x/y));
+            phi = (M_PI / 4) * (-x/y) + (M_PI/2);
         }
     } else {
-        if(x < y) {
+        if (x < y) {
             r = -x;
-            phi = (pi/4.0) * (4 + (y/x));
+            phi = (M_PI / 4) * (-y/-x) + M_PI;
         } else {
             r = -y;
-            phi = pi/4.0 * (6 - (x/y));
+            phi = (M_PI / 4) * (x/-y) - (M_PI/2);
         }
     }
-    */
 
-    float r = sqrt(x);
-    float phi = 2 * M_PI * y;
-    float u = r * cos(phi);
-    float v = r * sin(phi);
-    return Point2f(u,v);
-    throw RTException("Warp::squareToUniformDisk() is not yet implemented!");
+    return Point2f(r * cos(phi), r * sin(phi));
+    */
 }
 
-float Warp::squareToUniformDiskPdf(const Point2f &p) {
-    throw RTException("Warp::squareToUniformDiskPdf() is not yet implemented!");
+float Warp::squareToUniformDiskPdf(const Point2f &p)
+{
+    float dist = sqrt(p.x()*p.x() + p.y()*p.y());
+    return (dist > 1) ? 0 : (1.0/M_PI);
 }
 
 Vector3f Warp::squareToUniformHemisphere(const Point2f &sample) {
