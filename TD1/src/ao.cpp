@@ -20,32 +20,34 @@ public:
         if (!hit.foundIntersection())
             return scene->backgroundColor();
 
-        Color3f radiance = Color3f::Zero();
-        Normal3f normal = hit.normal();
+        float L = 0.0; // Ambiant Occlusion
         Point3f pos = ray.at(hit.t());
+        Normal3f normal = hit.normal();
+        Vector3f u = normal.unitOrthogonal(); /*cross(Vector3f(0,0,1));*/
+        Vector3f v = normal.cross(u);
 
         for (int i = 0; i < m_sampleCount; i++) {
             float x = Eigen::internal::random<float>(0,1);
             float y = Eigen::internal::random<float>(0,1);
 
-            Vector3f d = Warp::squareToUniformHemisphere(Point2f(x,y)) - pos;
-            Vector3f u = normal.unitOrthogonal();
-            Vector3f v = normal.cross(u);
+            Vector3f d = m_cosineWeighted ? Warp::squareToCosineHemisphere(Point2f(x,y)) :
+                                            Warp::squareToUniformHemisphere(Point2f(x,y));
             Vector3f p = d.x() * u + d.y() * v + d.z() * normal;
 
-            Ray shadowRay(pos + normal * Epsilon, d, true);
+            Ray shadowRay(pos + normal * Epsilon, p, true);
             Hit shadowHit;
             scene->intersect(shadowRay, shadowHit);
             if(!shadowHit.foundIntersection()) {
-                /*
-                float cos_term = std::max(0.f, direction.dot(normal));
-                Color3f brdf = material->brdf(-ray.direction, lightDir, normal, hit.texcoord());
-                radiance += (*it)->intensity(pos) * cos_term * brdf;
-                */
+                float theta = p.dot(normal) / (p.norm() * normal.norm());
+                float pdf = m_cosineWeighted ? Warp::squareToCosineHemispherePdf(d) :
+                                               Warp::squareToUniformHemispherePdf(d);
+                L += (theta / M_PI) / pdf;
             }
         }
 
-        return radiance;
+        L /= (float) m_sampleCount;
+
+        return Color3f(L,L,L);
     }
 
     std::string toString() const {

@@ -79,7 +79,7 @@ Vector3f Warp::squareToUniformHemisphere(const Point2f &sample) {
 
 float Warp::squareToUniformHemispherePdf(const Vector3f &v) {
     float dist = sqrt(v.x()*v.x() + v.y()*v.y() + v.z()*v.z());
-    return (dist > 1) || (v.z() < 0) ? 0 : (1.0/(2.0*M_PI));
+    return (dist > 1 + Epsilon) || (dist < 1 - Epsilon) || (v.z() < 0) ? 0 : (1.0/(2.0*M_PI));
 }
 
 Vector3f Warp::squareToCosineHemisphere(const Point2f &sample) {
@@ -90,5 +90,5 @@ Vector3f Warp::squareToCosineHemisphere(const Point2f &sample) {
 
 float Warp::squareToCosineHemispherePdf(const Vector3f &v) {
     float dist = sqrt(v.x()*v.x() + v.y()*v.y() + v.z()*v.z());
-    return (dist > 1) || (v.z() < 0) ? 0 : (v.z() / M_PI);
+    return (dist > 1 + Epsilon) || (dist < 1 - Epsilon) || (v.z() < 0) ? 0 : (v.z() / M_PI);
 }
