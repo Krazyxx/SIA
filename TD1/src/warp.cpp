@@ -30,6 +30,7 @@ float Warp::squareToUniformSquarePdf(const Point2f &sample) {
 
 Point2f Warp::squareToUniformDisk(const Point2f &sample)
 {
+
     // Prise en compte de l'aire
     float r = sqrt(sample.x());
     float phi = 2 * M_PI * sample.y();
@@ -89,5 +90,5 @@ Vector3f Warp::squareToCosineHemisphere(const Point2f &sample) {
 
 float Warp::squareToCosineHemispherePdf(const Vector3f &v) {
     float dist = sqrt(v.x()*v.x() + v.y()*v.y() + v.z()*v.z());
-    return (dist > 1) || (v.z() < 0) ? 0 : (1.0 / M_PI) * v.z();
+    return (dist > 1) || (v.z() < 0) ? 0 : (v.z() / M_PI);
 }
