@@ -42,51 +42,50 @@
       <h2>TD 1 - Échantillonnage</h2>
 
       <h3>1. Intégration de Monte-Carlo 1D</h3>
-      <p>
+
 	La méthode de Monte-Carlo consiste à calculer une valeur numérique en l'approchant à l'aide de procédés aléatoire : elle va estimer cette valeur. <br>
 	Estimation de $I=\int_a^b f(x) \, dx$ à l'aide de $N$ échantillons tirés aléatoirement dans $[a,b]$ selon la densité $p(x)$:
 	$$\langle I^N \rangle = \frac{1}{N} \sum_{i=0}^{N-1} \frac{f(x_i)}{p(x_i)}$$
 	<br>
 
-	Ici, nous souhaitons calculer l'intégrale de la fonction 1D : $f(x) = 5x^4$ sur l'intervalle $[0,1]$, c'est-à-dire $I=\int_0^1 5x^4 \, dx$. Pour cela nous allons calculer l'estimation de l'intégral à l'aide de l'estimateur de Monte-Carlo $\langle I \rangle$ avec une densité de probabilité uniforme $(\forall i,~pdf(x_i)=1)$, soit :
-	$$\langle I \rangle = \frac{1}{N} \sum_{i=1}^N \frac{f(x_i)}{pdf(x_i)} = \frac{1}{N} \sum_{i=1}^N 5x_i^4$$
+    Ici, nous souhaitons calculer l'intégrale de la fonction 1D : $f(x) = 5x^4$ sur l'intervalle $[0,1]$, c'est-à-dire $I=\int_0^1 5x^4 \, dx$. Pour cela nous allons calculer l'estimation de l'intégral à l'aide de l'estimateur de Monte-Carlo $\langle I \rangle$ avec une densité de probabilité uniforme $(\forall i,~pdf(x_i)=1)$, soit :
+    $$\langle I \rangle = \frac{1}{N} \sum_{i=1}^N \frac{f(x_i)}{pdf(x_i)} = \frac{1}{N} \sum_{i=1}^N 5x_i^4$$
 
-	L'erreur d'estimation correspond à la différence entre la valeur estimée et la valeur réelle :
-	$$erreur\ d'estimation = I - \langle I \rangle$$
-	<figure>
-	  <img src="image/1. Erreur d'estimation.png" width="450" alt="Erreur d'estimation en fonction du nombre d'échantillons."/>
-	  <figcaption>Erreur d'estimation en fonction du nombre d'échantillons.</figcaption>
-	</figure>
+    L'erreur d'estimation correspond à la différence entre la valeur estimée et la valeur réelle :
+    $$erreur\ d'estimation = I - \langle I \rangle$$
+    <figure>
+        <img src="image/1. Erreur d'estimation.png" width="450" alt="Erreur d'estimation en fonction du nombre d'échantillons."/>
+        <figcaption>Erreur d'estimation en fonction du nombre d'échantillons.</figcaption>
+    </figure>
 
-	On calcule ensuite la variance et l'écartype analyptique, sachant que l'écart-type $\sigma$ correspond à la racine carrée de la variance $V = \sigma^2$ :
-	$$\sigma^2_{est} = \frac{1}{N} \int_0^1 \left(\frac{f(x)}{pdf(x)} - I \right)^2 pdf(x) dx = \frac{1}{N} \int_0^1 (5x^4 - 1)^2 dx$$
+    On calcule ensuite la variance et l'écartype analyptique, sachant que l'écart-type $\sigma$ correspond à la racine carrée de la variance $V = \sigma^2$ :
+    $$\sigma^2_{est} = \frac{1}{N} \int_0^1 \left(\frac{f(x)}{pdf(x)} - I \right)^2 pdf(x) dx = \frac{1}{N} \int_0^1 (5x^4 - 1)^2 dx$$
 
-	<figure>
-	  <img src="image/1. Variance et écart-type analyptique.png" width="450" alt="Variance et écart-type analyptique en fonction du nombre d'échantillons."/>
-	  <figcaption>Variance et écart-type analyptique en fonction du nombre d'échantillons.</figcaption>
-	</figure>
+    <figure>
+        <img src="image/1. Variance et écart-type analyptique.png" width="450" alt="Variance et écart-type analyptique en fonction du nombre d'échantillons."/>
+        <figcaption>Variance et écart-type analyptique en fonction du nombre d'échantillons.</figcaption>
+    </figure>
 
-	Puis on calcule la variance et l'écart-type numérique :
-	$$\langle \sigma^2_{est} \rangle = \frac{1}{N-1} \left\{ \frac{1}{N} \sum_{i=1}^N \left(\frac{f(x_i)}{pdf(x_i)}\right)^2 - \left( \frac{1}{N} \sum_{i=1}^N \frac{f(x_i)}{pdf(x_i)}\right)^2 \right\}$$
-	<figure>
-	  <img src="image/1. Variance et écart-type numérique.png" width="450" alt="Variance et écart-type numérique en fonction du nombre d'échantillons."/>
-	  <figcaption>Variance et écart-type numérique en fonction du nombre d'échantillons.</figcaption>
-	</figure>
+    Puis on calcule la variance et l'écart-type numérique :
+    $$\langle \sigma^2_{est} \rangle = \frac{1}{N-1} \left\{ \frac{1}{N} \sum_{i=1}^N \left(\frac{f(x_i)}{pdf(x_i)}\right)^2 - \left( \frac{1}{N} \sum_{i=1}^N \frac{f(x_i)}{pdf(x_i)}\right)^2 \right\}$$
+    <figure>
+        <img src="image/1. Variance et écart-type numérique.png" width="450" alt="Variance et écart-type numérique en fonction du nombre d'échantillons."/>
+        <figcaption>Variance et écart-type numérique en fonction du nombre d'échantillons.</figcaption>
+    </figure>
 
-	On affiche l'erreur d'estimation, l'écart-type numérique et analyptique en fonction du nombre d'échantillons :
-	<figure>
-	  <img src="image/1. Erreur d'estimation, variance analytique et numérique.png" width="450" alt="Erreur d'estimation, variance analytique et numérique en fonction du nombre d'échantillons."/>
-	  <figcaption>Erreur d'estimation, variance analytique et numérique en fonction du nombre d'échantillons.</figcaption>
-	</figure>
-      </p>
+    On affiche l'erreur d'estimation, l'écart-type numérique et analyptique en fonction du nombre d'échantillons :
+    <figure>
+        <img src="image/1. Erreur d'estimation, variance analytique et numérique.png" width="450" alt="Erreur d'estimation, variance analytique et numérique en fonction du nombre d'échantillons."/>
+        <figcaption>Erreur d'estimation, variance analytique et numérique en fonction du nombre d'échantillons.</figcaption>
+    </figure>
 
 
       <h3>2. Anti-Aliasing</h3>
       Pour savoir la couleur des pixels d'une scène 3D, on lance des rayons depuis la caméra au centre du pixel et on le colore par la couleur que le rayon intercepte. Le problème c'est que cela entraîne des problèmes d'alisating.
 
       <figure>
-	<img src="image/2.0. tw-1 (all).png" width="500" alt="Sans échantillonnage (problèmes d'aliasing)"/>
-	<figcaption>Sans échantillonnage (problèmes d'aliasing)</figcaption>
+          <img src="image/2.0. tw-1 (all).png" width="500" alt="Sans échantillonnage (problèmes d'aliasing)"/>
+          <figcaption>Sans échantillonnage (problèmes d'aliasing)</figcaption>
       </figure>
 
       Pour résoudre ce problème, on va intégre la radiance sur le pixel à l'aide de Monte-Carlo en lançant plusieurs rayons par pixel et en moyennant leur contribution.
@@ -95,34 +94,49 @@
       <h4>2.1. Échantillonnage régulier</h4>
       Tout d'abord, on va échantilloner le pixel en grille régulière de taille $n \times n$, où $n$ correspon à l'attribut <code>samplecount</code> de la caméra.
       <figure>
-	<img src="image/2.1. tw-8-regulier (all).png" width="500" alt="Échantillonnage régulier – 8x8 rayons par pixel"/>
-	<figcaption>Échantillonnage régulier – 8x8 rayons par pixel</figcaption>
+          <img src="image/2.1. tw-8-regulier (all).png" width="500" alt="Échantillonnage régulier – 8x8 rayons par pixel"/>
+          <figcaption>Échantillonnage régulier – 8x8 rayons par pixel</figcaption>
       </figure>
 
       <h4>2.2. Échantillonnage stratifié</h4>
        Ensuite, on échantillonne de façon stratifié en ajoutant du <i>jitter</i> à chaque rayon.
-      <figure>
-	<img src="image/2.2. tw-8-stratifié (all).png" width="500" alt="Échantillonnage stratifié – 8x8 rayons par pixel"/>
-	<figcaption>Échantillonnage stratifié – 8x8 rayons par pixel</figcaption>
-      </figure>
+       <figure>
+           <img src="image/2.2. tw-8-stratifié (all).png" width="500" alt="Échantillonnage stratifié – 8x8 rayons par pixel"/>
+           <figcaption>Échantillonnage stratifié – 8x8 rayons par pixel</figcaption>
+       </figure>
 
 
-      <figure>
-	<img src="image/2.2. deuxSpheres-2-stratifié.png" width="500" alt="Échantillonnage stratifié – 2x2 rayons par pixel"/>
-	<figcaption>Échantillonnage stratifié – 2x2 rayons par pixel</figcaption>
-      </figure>
-      <figure>
-	<img src="image/2.2. deuxSpheres-8-stratifié.png" width="500" alt="Échantillonnage stratifié – 8x8 rayons par pixel"/>
-	<figcaption>Échantillonnage stratifié – 8x8 rayons par pixel</figcaption>
-      </figure>
-      <figure>
-	<img src="image/2.2. deuxSpheres-32-stratifié.png" width="500" alt="Échantillonnage stratifié – 32x32 rayons par pixel"/>
-	<figcaption>Échantillonnage stratifié – 32x32 rayons par pixel</figcaption>
-      </figure>
-      <figure>
-	<img src="image/2.2. deuxSpheres-128-stratifié.png" width="500" alt="Échantillonnage stratifié – 128x128 rayons par pixel"/>
-	<figcaption>Échantillonnage stratifié – 128x128 rayons par pixel</figcaption>
-      </figure>
+       <table>
+           <tr>
+               <td>
+                   <figure>
+                       <img src="image/2.2. deuxSpheres-2-stratifié.png" width="350" alt="Échantillonnage stratifié – 2x2 rayons par pixel"/>
+                       <figcaption>Échantillonnage stratifié – 2x2 rayons par pixel</figcaption>
+                   </figure>
+               </td>
+               <td>
+                   <figure>
+                       <img src="image/2.2. deuxSpheres-8-stratifié.png" width="350" alt="Échantillonnage stratifié – 8x8 rayons par pixel"/>
+                       <figcaption>Échantillonnage stratifié – 8x8 rayons par pixel</figcaption>
+                   </figure>
+               </td>
+           </tr>
+           <tr>
+               <td>
+                   <figure>
+                       <img src="image/2.2. deuxSpheres-32-stratifié.png" width="350" alt="Échantillonnage stratifié – 32x32 rayons par pixel"/>
+                       <figcaption>Échantillonnage stratifié – 32x32 rayons par pixel</figcaption>
+                   </figure>
+               </td>
+               <td>
+                   <figure>
+                       <img src="image/2.2. deuxSpheres-128-stratifié.png" width="350" alt="Échantillonnage stratifié – 128x128 rayons par pixel"/>
+                       <figcaption>Échantillonnage stratifié – 128x128 rayons par pixel</figcaption>
+                   </figure>
+               </td>
+           </tr>
+       </table>
+
 
 
       <h4>2.3. Bonus : filtre de reconstruction</h4>
@@ -131,7 +145,7 @@
 
       <h4>3.1. Échantillonnage de Monte-Carlo</h4>
       On va rajouter dans l'intégrateur Whitted, une gestion différentes des lights pour les AreaLight (source lumineuse étendue rectangulaire). <br>
-	Pour cela, on va prendre un point aléatoirement dans l'AreaLight (calculer à l'aide de sa tangente, sa bitangente, son point et sa taille). </br>
+	Pour cela, on va prendre un point aléatoirement dans l'AreaLight (calculé à l'aide de sa tangente, sa bitangente, son point et sa taille). </br>
       <br>
       <code>
 	const AreaLight* light = dynamic_cast<const AreaLight*>(*it); <br><br>
@@ -144,12 +158,12 @@
       Ensuite on calcule la direction vers ce point (<code>lightDir = uPos - pos</code>) et sa distance (<code>dist = lightDir.norm();</code>).
 
       <figure>
-          <img src="image/3.1 killeroo_area-8-stratiffié-0.5.png" width="500" alt="Échantillonnage stratifié source de taille 0.5x0.5 – 8x8 rayons par pixel"/>
+          <img src="image/3.1 killeroo_area-8-stratifié-0.5.png" width="500" alt="Échantillonnage stratifié source de taille 0.5x0.5 – 8x8 rayons par pixel"/>
           <figcaption>Échantillonnage stratifié source de taille 0.5x0.5 – 8x8 rayons par pixel</figcaption>
       </figure>
 
       <figure>
-          <img src="image/3.1 killeroo_area-8-stratiffié-0.1.png" width="500" alt="Échantillonnage stratifié source de taille 0.1x0.1 – 8x8 rayons par pixel"/>
+          <img src="image/3.1 killeroo_area-8-stratifié-0.1.png" width="500" alt="Échantillonnage stratifié source de taille 0.1x0.1 – 8x8 rayons par pixel"/>
           <figcaption>Échantillonnage stratifié source de taille 0.1x0.1 – 8x8 rayons par pixel</figcaption>
       </figure>
 
@@ -161,22 +175,38 @@
       </figure>
 
       Voic les 4 affichages que l'on peut obtenir séparément à partir de la texture :
-      <figure>
-          <img src="image/3.2 tw_area-blue.png" width="200" alt="Tw blue"/>
-          <figcaption>Tw blue</figcaption>
-      </figure>
-      <figure>
-          <img src="image/3.2 tw_area-red.png" width="200" alt="Tw red"/>
-          <figcaption>Tw red</figcaption>
-      </figure>
-      <figure>
-          <img src="image/3.2 tw_area-green.png" width="200" alt="Tw green"/>
-          <figcaption>Tw green</figcaption>
-      </figure>
-      <figure>
-          <img src="image/3.2 tw_area-white.png" width="200" alt="Tw white"/>
-          <figcaption>Tw white</figcaption>
-      </figure>
+
+      <table>
+          <tr>
+              <td>
+                  <figure>
+                      <img src="image/3.2 tw_area-blue.png" width="250" alt="Tw blue"/>
+                      <figcaption>Tw blue</figcaption>
+                  </figure>
+              </td>
+              <td>
+                  <figure>
+                      <img src="image/3.2 tw_area-red.png" width="250" alt="Tw red"/>
+                      <figcaption>Tw red</figcaption>
+                  </figure>
+              </td>
+          </tr>
+          <tr>
+              <td>
+                  <figure>
+                      <img src="image/3.2 tw_area-green.png" width="250" alt="Tw green"/>
+                      <figcaption>Tw green</figcaption>
+                  </figure>
+              </td>
+              <td>
+                  <figure>
+                      <img src="image/3.2 tw_area-white.png" width="250" alt="Tw white"/>
+                      <figcaption>Tw white</figcaption>
+                  </figure>
+              </td>
+          </tr>
+      </table>
+
       Et lorsque l'on module l'intensité par la texture compléte :
       <figure>
           <img src="image/3.2 tw_area-all.png" width="400" alt="Échantillonnage stratifié – 8x8 rayons par pixel – source étendue texturée"/>
@@ -187,7 +217,74 @@
 
       <h3>4. Ambiante Occlusion</h3>
       <h4>4.1. Échantillonnage d'un hémisphère</h4>
-      <h4>4.2. CAlcul de l'AO</h4>
+
+      <figure>
+          <center>
+              <table>
+                  <tbody>
+                      <tr>
+                          <td><img src="image/4.1 - Échantillonnage Uniform Disk 1.png" width="350"/></td>
+                          <td>
+                              <img src="image/4.1 - Échantillonnage Uniform Disk 2.png" width="350" alt="Échantillonnage uniforme du disque autour du pôle (0,0,1)"/>
+                              <figcaption>Prise en compte de l'aire</figcaption>
+                          </td>
+                          <td>
+                              <img src="image/4.1 - Échantillonnage Uniform Disk 2 bis.png" width="350" alt="Échantillonnage uniforme du disque autour du pôle (0,0,1)"/>
+                              <figcaption>Concentric Map</figcaption>
+                          </td>
+                          <td><img src="image/4.1 - Échantillonnage Uniform Disk 3.png" width="350"/></td>
+                      </tr>
+                  </tbody>
+              </table>
+          </center>
+          <figcaption>Échantillonnage uniforme du disque autour du pôle (0,0,1)</figcaption>
+      </figure>
+
+      <figure>
+          <center>
+              <table>
+                  <tbody>
+                      <tr>
+                          <td><img src="image/4.1 - Échantillonnage Uniform Hemisphere 1.png" width="350"/></td>
+                          <td><img src="image/4.1 - Échantillonnage Uniform Hemisphere 2.png" width="350"/></td>
+                          <td><img src="image/4.1 - Échantillonnage Uniform Hemisphere 3.png" width="350"/></td>
+                      </tr>
+                  </tbody>
+              </table>
+          </center>
+          <figcaption>Échantillonnage uniforme de l'hémisphère autour du pôle (0,0,1)</figcaption>
+      </figure>
+
+      <figure>
+          <center>
+              <table>
+                  <tbody>
+                      <tr>
+                          <td><img src="image/4.1 - Échantillonnage Uniform Hemisphere Cosine 1.png" width="350"/></td>
+                          <td><img src="image/4.1 - Échantillonnage Uniform Hemisphere Cosine 2.png" width="350"/></td>
+                          <td><img src="image/4.1 - Échantillonnage Uniform Hemisphere Cosine 3.png" width="350"/></td>
+                      </tr>
+                  </tbody>
+              </table>
+          </center>
+          <figcaption>Échantillonnage pondéré par le cosinus de l'hémisphère autour du pôle (0,0,1)</figcaption>
+      </figure>
+
+      <h4>4.2. Calcul de l'AO</h4>
+
+      <figure>
+          <center>
+              <table>
+                  <tbody>
+                      <tr>
+                          <td><img src="image/4.2 - Échantillonnage Uniforme.png" width="350"/></td>
+                          <td><img src="image/4.2 - Échantillonnage Cosinus.png" width="350"/></td>
+                      </tr>
+                  </tbody>
+              </table>
+          </center>
+          <figcaption>Échantillonnage uniforme (à gauche) et pondéré par le cosinus (à droite) avec 256 échantillons</figcaption>
+      </figure>
 
     </div>
 
