@@ -22,12 +22,30 @@ Ward::Ward(const PropertyList &propList)
 
 Color3f Ward::brdf(const Vector3f& viewDir, const Vector3f& lightDir, const Normal3f& normal, const Vector2f& uv) const
 {
-    throw RTException("Ward::brdf() is not yet implemented!");
+    // brdf(i,o) = rho_d / M_PI + Fr(i,o)
+
+    float sqrtX = lightDir.dot(normal) * viewDir.dot(normal);
+    if (sqrtX <= 0) { return Color3f(0,0,0); }
+
+    Vector3f d(0,1,0);
+    Vector3f x = (d - (d.dot(normal) * normal)).normalized();
+    Vector3f y = x.cross(normal);
+
+    Vector3f h = (viewDir + lightDir) / (viewDir + lightDir).norm();
+    float squareHX = (h.dot(x) / m_alphaX) * (h.dot(x) / m_alphaX);
+    float squareHY = (h.dot(y) / m_alphaY) * (h.dot(y) / m_alphaY);
+    float squareHN = h.dot(normal) * h.dot(normal);
+
+    float expo = - ((squareHX + squareHY) / squareHN);
+    float deno = 4 * M_PI * m_alphaX * m_alphaY * sqrt(sqrtX);
+    Color3f Fr = (m_specularColor / deno) * exp(expo);
+
+    return diffuseColor(uv) / M_PI + Fr;
 }
 
 std::string Ward::toString() const {
     return tfm::format(
-        "Ward [\n" 
+        "Ward [\n"
         "  diffuse color = %s\n"
         "  specular color = %s\n"
         "  alphaX = %f  alphaY = %f\n"
@@ -36,4 +54,4 @@ std::string Ward::toString() const {
              m_alphaX, m_alphaY);
 }
 
-REGISTER_CLASS(Ward, "Ward")
+REGISTER_CLASS(Ward, "ward")
