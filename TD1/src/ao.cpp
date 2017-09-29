@@ -23,7 +23,7 @@ public:
         float L = 0.0; // Ambiant Occlusion
         Point3f pos = ray.at(hit.t());
         Normal3f normal = hit.normal();
-        Vector3f u = normal.unitOrthogonal(); /*cross(Vector3f(0,0,1));*/
+        Vector3f u = normal.unitOrthogonal();
         Vector3f v = normal.cross(u);
 
         for (int i = 0; i < m_sampleCount; i++) {

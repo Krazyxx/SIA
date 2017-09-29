@@ -106,37 +106,35 @@
        </figure>
 
 
-       <table>
-           <tr>
-               <td>
-                   <figure>
-                       <img src="image/2.2. deuxSpheres-2-stratifié.png" width="350" alt="Échantillonnage stratifié – 2x2 rayons par pixel"/>
-                       <figcaption>Échantillonnage stratifié – 2x2 rayons par pixel</figcaption>
-                   </figure>
-               </td>
-               <td>
-                   <figure>
-                       <img src="image/2.2. deuxSpheres-8-stratifié.png" width="350" alt="Échantillonnage stratifié – 8x8 rayons par pixel"/>
-                       <figcaption>Échantillonnage stratifié – 8x8 rayons par pixel</figcaption>
-                   </figure>
-               </td>
-           </tr>
-           <tr>
-               <td>
-                   <figure>
-                       <img src="image/2.2. deuxSpheres-32-stratifié.png" width="350" alt="Échantillonnage stratifié – 32x32 rayons par pixel"/>
-                       <figcaption>Échantillonnage stratifié – 32x32 rayons par pixel</figcaption>
-                   </figure>
-               </td>
-               <td>
-                   <figure>
-                       <img src="image/2.2. deuxSpheres-128-stratifié.png" width="350" alt="Échantillonnage stratifié – 128x128 rayons par pixel"/>
-                       <figcaption>Échantillonnage stratifié – 128x128 rayons par pixel</figcaption>
-                   </figure>
-               </td>
-           </tr>
-       </table>
 
+       <figure>
+           <center>
+               <table>
+                   <tbody>
+                       <tr>
+                           <td>
+                               <img src="image/2.2. deuxSpheres-2-stratifié.png" width="350" alt="Échantillonnage stratifié – 2x2 rayons par pixel"/>
+                               <figcaption>Échantillonnage stratifié – 2x2 rayons par pixel</figcaption>
+                           </td>
+                           <td>
+                               <img src="image/2.2. deuxSpheres-8-stratifié.png" width="350" alt="Échantillonnage stratifié – 8x8 rayons par pixel"/>
+                               <figcaption>Échantillonnage stratifié – 8x8 rayons par pixel</figcaption>
+                           </td>
+                       </tr>
+                       <tr>
+                           <td>
+                               <img src="image/2.2. deuxSpheres-32-stratifié.png" width="350" alt="Échantillonnage stratifié – 32x32 rayons par pixel"/>
+                               <figcaption>Échantillonnage stratifié – 32x32 rayons par pixel</figcaption>
+                           </td>
+                           <td>
+                               <img src="image/2.2. deuxSpheres-128-stratifié.png" width="350" alt="Échantillonnage stratifié – 128x128 rayons par pixel"/>
+                               <figcaption>Échantillonnage stratifié – 128x128 rayons par pixel</figcaption>
+                           </td>
+                       </tr>
+                   </tbody>
+               </table>
+           </center>
+       </figure>
 
 
       <h4>2.3. Bonus : filtre de reconstruction</h4>
@@ -147,24 +145,28 @@
       On va rajouter dans l'intégrateur Whitted, une gestion différentes des lights pour les AreaLight (source lumineuse étendue rectangulaire). <br>
 	Pour cela, on va prendre un point aléatoirement dans l'AreaLight (calculé à l'aide de sa tangente, sa bitangente, son point et sa taille). </br>
       <br>
-      <code>
-	const AreaLight* light = dynamic_cast<const AreaLight*>(*it); <br><br>
+      <figure class="highlight" style="text-align:left">
+          <pre><code class=" hljs cpp">const AreaLight* light = dynamic_cast<const AreaLight*>(*it);
 
-	float uSize = Eigen::internal::random<float>(0, light->size()[0]);  <br>
-	float vSize = Eigen::internal::random<float>(0, light->size()[1]);  <br>
-	Point3f uPos = light->position() + uSize * light->uVec() + vSize * light->vVec();  <br>
-      </code>
+float uSize = Eigen::internal::random<float>(0, light->size()[0]);
+float vSize = Eigen::internal::random<float>(0, light->size()[1]);
+Point3f uPos = light->position() + uSize * light->uVec() + vSize * light->vVec();</code></pre>
+      </figure>
       <br>
       Ensuite on calcule la direction vers ce point (<code>lightDir = uPos - pos</code>) et sa distance (<code>dist = lightDir.norm();</code>).
 
       <figure>
-          <img src="image/3.1 killeroo_area-8-stratifié-0.5.png" width="500" alt="Échantillonnage stratifié source de taille 0.5x0.5 – 8x8 rayons par pixel"/>
-          <figcaption>Échantillonnage stratifié source de taille 0.5x0.5 – 8x8 rayons par pixel</figcaption>
-      </figure>
-
-      <figure>
-          <img src="image/3.1 killeroo_area-8-stratifié-0.1.png" width="500" alt="Échantillonnage stratifié source de taille 0.1x0.1 – 8x8 rayons par pixel"/>
-          <figcaption>Échantillonnage stratifié source de taille 0.1x0.1 – 8x8 rayons par pixel</figcaption>
+          <center>
+              <table>
+                  <tbody>
+                      <tr>
+                          <td><img src="image/3.1 killeroo_area-8-stratifié-0.1.png" width="500" alt="Échantillonnage stratifié source de taille 0.1x0.1 – 8x8 rayons par pixel"/></td>
+                          <td><img src="image/3.1 killeroo_area-8-stratifié-0.5.png" width="500" alt="Échantillonnage stratifié source de taille 0.5x0.5 – 8x8 rayons par pixel"/></td>
+                      </tr>
+                  </tbody>
+              </table>
+          </center>
+          <figcaption>Échantillonnage stratifié source de taille 0.5x0.5 (gauche) et 0.1x0.1 (droite) – 8x8 rayons par pixel</figcaption>
       </figure>
 
       <h4>3.2. Source texturée</h4>
@@ -176,36 +178,34 @@
 
       Voic les 4 affichages que l'on peut obtenir séparément à partir de la texture :
 
-      <table>
-          <tr>
-              <td>
-                  <figure>
-                      <img src="image/3.2 tw_area-blue.png" width="250" alt="Tw blue"/>
-                      <figcaption>Tw blue</figcaption>
-                  </figure>
-              </td>
-              <td>
-                  <figure>
-                      <img src="image/3.2 tw_area-red.png" width="250" alt="Tw red"/>
-                      <figcaption>Tw red</figcaption>
-                  </figure>
-              </td>
-          </tr>
-          <tr>
-              <td>
-                  <figure>
-                      <img src="image/3.2 tw_area-green.png" width="250" alt="Tw green"/>
-                      <figcaption>Tw green</figcaption>
-                  </figure>
-              </td>
-              <td>
-                  <figure>
-                      <img src="image/3.2 tw_area-white.png" width="250" alt="Tw white"/>
-                      <figcaption>Tw white</figcaption>
-                  </figure>
-              </td>
-          </tr>
-      </table>
+      <figure>
+          <center>
+              <table>
+                  <tbody>
+                      <tr>
+                          <td>
+                              <img src="image/3.2 tw_area-blue.png" width="300" alt="Tw blue"/>
+                              <figcaption>Tw blue</figcaption>
+                          </td>
+                          <td>
+                              <img src="image/3.2 tw_area-red.png" width="300" alt="Tw red"/>
+                              <figcaption>Tw red</figcaption>
+                          </td>
+                      </tr>
+                      <tr>
+                          <td>
+                              <img src="image/3.2 tw_area-green.png" width="300" alt="Tw green"/>
+                              <figcaption>Tw green</figcaption>
+                          </td>
+                          <td>
+                              <img src="image/3.2 tw_area-white.png" width="300" alt="Tw white"/>
+                              <figcaption>Tw white</figcaption>
+                          </td>
+                      </tr>
+                  </tbody>
+              </table>
+          </center>
+      </figure>
 
       Et lorsque l'on module l'intensité par la texture compléte :
       <figure>
@@ -215,9 +215,21 @@
 
       <h4>3.3. Bonus : échantillonnage stratifié</h4>
 
-      <h3>4. Ambiante Occlusion</h3>
-      <h4>4.1. Échantillonnage d'un hémisphère</h4>
+      <h3>4. Occlusion Ambiante</h3>
+      Comme dit dans l'énoncé : " L'<i>ambient occlusion</i> est une technique de rendu faisant l'hypothèse qu'une surface
+      (diffuse) reçoit une illumination uniforme depuis toutes les directions et que la visibilité est le seul effet important". <br />
+      L'occlusion ambiante au point x, noté L(x), est défini comme étant "l'intégrale de la fonction de visibilité V sur l’hémisphère
+      supérieur centré en ce point" :
+      $$L(x) = \int_{\Omega}V(x, x+\alpha\omega)\,\frac{\cos\theta}{\pi}\,\mathrm{d}\omega$$
 
+      Pour calculer l'occlusion ambiante au point x (L(x)), on va simuler un hémisphère autour du point et on va générer un nuage de point
+      sur cette hémisphère. Ensuite on lancera un rayon depuis le point x vers chaque point de l'hémisphère et si le rayon ne provoque
+      aucune intéraction alors on incrémente L(x) de $\frac{\cos(\theta)}{\pi}$ que l'on pondère par la pdf (<i>probability density function</i>)
+      de l'hémisphère. On moyenne ensuite notre somme (qui est en fait une approximation d'intégrale par Monte-Carlo) par le nombre de rayon lancé.
+
+      <h4>4.1. Échantillonnage d'un hémisphère</h4>
+      Avant de pouvoir calculer l'occlusion ambiante, on a besoin de générer des points aléatoirement sur un hémisphère et de connaitre la pdf associé. <br />
+      Pour cela on a d'abord implémenté la génération aléatoire de point sur un disque et sa pdf.
       <figure>
           <center>
               <table>
@@ -240,6 +252,7 @@
           <figcaption>Échantillonnage uniforme du disque autour du pôle (0,0,1)</figcaption>
       </figure>
 
+      On a ensuite implémenter pour un hémisphère, avec une répartition uniforme.
       <figure>
           <center>
               <table>
@@ -255,6 +268,7 @@
           <figcaption>Échantillonnage uniforme de l'hémisphère autour du pôle (0,0,1)</figcaption>
       </figure>
 
+     Et enfin on a implémenté pour un hémisphère, avec une répartition cette fois-ci pondérée par un cosinus.
       <figure>
           <center>
               <table>
@@ -271,7 +285,43 @@
       </figure>
 
       <h4>4.2. Calcul de l'AO</h4>
+      On implémente ensuite l'occlusion ambiante dans l'intégrateur $AO$ en lançant $$m\_sampleCount$$ rayons d'ombres,
+      comme expliqué dans la partie 4. <br />
+      Pour se faire, on va créer un repère avec comme origine le point $x$ :
+      <figure class="highlight" style="text-align:left">
+          <pre><code class=" hljs cpp">Normal3f normal = hit.normal();
+Vector3f u = normal.unitOrthogonal();
+Vector3f v = normal.cross(u);</code></pre>
+      </figure>
 
+      On va ensuite lancer les <code>m_sampleCount</code> rayons d'ombre dans des directions aléatoire
+      dans l'hémisphère supérieur. Pour cela on va prendre un point aléatoirement sur l'hémisphère <code>d</code>
+      et on va récupérer le vecteur p qui a pour direction $x \rightarrow d$.
+      On lance ensuite notre rayon rayon d'ombre depuis <code>x</code> dans la direction de <code>p</code> et s'il
+      ne se fait pas intercepter, alors on ajoute à <code>L</code> $\frac{\cos(\theta)}{\pi}$ avec $\theta$ qui correspond
+      à l'angle entre la normal au point x et le rayon d'ombre. Et l'on pondère par la pdf. <br />
+      Aprés avoir fait ça pour chaque rayon d'ombre, on pondère par le nombre de rayons d'ombre <code>m_sampleCount</code>.
+
+      <figure class="highlight" style="text-align:left">
+          <pre><code class=" hljs cpp">for (int i = 0; i < m_sampleCount; i++) {
+    float x = Eigen::internal::random<float>(0,1);
+    float y = Eigen::internal::random<float>(0,1);
+
+    Vector3f d = m_cosineWeighted ? Warp::squareToCosineHemisphere(Point2f(x,y)) :
+                                                                Warp::squareToUniformHemisphere(Point2f(x,y));
+    Vector3f p = d.x() * u + d.y() * v + d.z() * normal;
+
+    Ray shadowRay(pos_x + normal * Epsilon, p, true);
+    Hit shadowHit;
+    scene->intersect(shadowRay, shadowHit);
+    if(!shadowHit.foundIntersection()) {
+        float theta = p.dot(normal) / (p.norm() * normal.norm());
+        float pdf = m_cosineWeighted ? Warp::squareToCosineHemispherePdf(d) :
+                                                                Warp::squareToUniformHemispherePdf(d);
+        L += (theta / M_PI) / pdf;
+    }
+}</code></pre>
+        </figure>
       <figure>
           <center>
               <table>
@@ -286,6 +336,8 @@
           <figcaption>Échantillonnage uniforme (à gauche) et pondéré par le cosinus (à droite) avec 256 échantillons</figcaption>
       </figure>
 
+      Pour moi, la stratégie d'échantillonnage la plus efficace en termes de convergence et de performances est celle
+      de l'échantillonnage pondéré par le cosinus.
     </div>
 
     <script type="text/javascript">
