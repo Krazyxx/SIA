@@ -37,19 +37,41 @@
 
     <div id="content">
 
-      <h1>SIA - Gouraud Jimmy</h1>
+      <h1 style="text-align:center">TD1 - Échantillonnage</h1>
 
-      <h2>TD 1 - Échantillonnage</h2>
-
-      <h3>1. Intégration de Monte-Carlo 1D</h3>
+      <h2>1. Intégration de Monte-Carlo 1D</h2>
 
 	La méthode de Monte-Carlo consiste à calculer une valeur numérique en l'approchant à l'aide de procédés aléatoire : elle va estimer cette valeur. <br>
 	Estimation de $I=\int_a^b f(x) \, dx$ à l'aide de $N$ échantillons tirés aléatoirement dans $[a,b]$ selon la densité $p(x)$:
 	$$\langle I^N \rangle = \frac{1}{N} \sum_{i=0}^{N-1} \frac{f(x_i)}{p(x_i)}$$
 	<br>
 
-    Ici, nous souhaitons calculer l'intégrale de la fonction 1D : $f(x) = 5x^4$ sur l'intervalle $[0,1]$, c'est-à-dire $I=\int_0^1 5x^4 \, dx$. Pour cela nous allons calculer l'estimation de l'intégral à l'aide de l'estimateur de Monte-Carlo $\langle I \rangle$ avec une densité de probabilité uniforme $(\forall i,~pdf(x_i)=1)$, soit :
+    Ici, nous souhaitons calculer l'intégrale de la fonction 1D : $f(x) = 5x^4$ sur l'intervalle $[0,1]$, c'est-à-dire $I=\int_0^1 5x^4 \, dx$.
+    Pour cela nous allons calculer l'estimation de l'intégral à l'aide de l'estimateur de Monte-Carlo $\langle I \rangle$ avec une densité de
+    probabilité uniforme $(\forall i,~pdf(x_i)=1)$, soit :
     $$\langle I \rangle = \frac{1}{N} \sum_{i=1}^N \frac{f(x_i)}{pdf(x_i)} = \frac{1}{N} \sum_{i=1}^N 5x_i^4$$
+
+    <div class="highlight">
+        <pre><code class="cpp javascript">/* Integration de Monte-Carlo */
+double int_mc(double(*f)(double), double& varest, double a, double b, int n)
+{
+    uniform_real_distribution<float> distr (a,b);
+
+    double res = 0, res2 = 0;;
+    for (int i = 0; i < n; i++) {
+        double random = distr(gener);
+        double value = f(random);
+        res += value;
+        res2 += value * value;
+    }
+    res /= n;
+    res2 /= n;
+
+    varest = (1./(n-1.)) * (res2 - res * res);
+
+    return res;
+}</code></pre>
+        </div>
 
     L'erreur d'estimation correspond à la différence entre la valeur estimée et la valeur réelle :
     $$erreur\ d'estimation = I - \langle I \rangle$$
@@ -80,7 +102,7 @@
     </figure>
 
 
-      <h3>2. Anti-Aliasing</h3>
+      <h2>2. Anti-Aliasing</h2>
       Pour savoir la couleur des pixels d'une scène 3D, on lance des rayons depuis la caméra au centre du pixel et on le colore par la couleur que le rayon intercepte. Le problème c'est que cela entraîne des problèmes d'alisating.
 
       <figure>
@@ -91,21 +113,65 @@
       Pour résoudre ce problème, on va intégre la radiance sur le pixel à l'aide de Monte-Carlo en lançant plusieurs rayons par pixel et en moyennant leur contribution.
 
 
-      <h4>2.1. Échantillonnage régulier</h4>
+      <h3>2.1. Échantillonnage régulier</h3>
       Tout d'abord, on va échantilloner le pixel en grille régulière de taille $n \times n$, où $n$ correspon à l'attribut <code>samplecount</code> de la caméra.
       <figure>
           <img src="image/2.1. tw-8-regulier (all).png" width="500" alt="Échantillonnage régulier – 8x8 rayons par pixel"/>
           <figcaption>Échantillonnage régulier – 8x8 rayons par pixel</figcaption>
       </figure>
 
-      <h4>2.2. Échantillonnage stratifié</h4>
+      <h3>2.2. Échantillonnage stratifié</h3>
        Ensuite, on échantillonne de façon stratifié en ajoutant du <i>jitter</i> à chaque rayon.
+
+       <div class="highlight">
+           <pre><code class="cpp javascript">void renderBlock(Scene* scene, ImageBlock& block)
+{
+    const Camera *camera = scene->camera();
+
+    float tanfovy2 = tan(camera->fovY()*0.5);
+    Vector3f camX = camera->right() * tanfovy2 * camera->nearDist() * float(camera->vpWidth())/float(camera->vpHeight());
+    Vector3f camY = camera->up() * tanfovy2 * camera->nearDist();
+    Vector3f camF = camera->direction() * camera->nearDist();
+
+    Integrator* integrator = scene->integrator();
+    integrator->preprocess(scene);
+
+    /* Clear the block contents */
+    block.clear();
+
+    Vector2i offset = block.getOffset();
+    Vector2i size  = block.getSize();
+
+    /* For each pixel and pixel sample */
+    for (int y=0; y<size.y(); ++y) {
+        for (int x=0; x<size.x(); ++x) {
+            for (double i = 0; i < camera->sampleCount(); i++) {
+                for (double j = 0; j < camera->sampleCount(); j++) {
+                    // compute the primary ray parameters
+                    Ray ray;
+                    ray.origin = camera->position();
+                    double tmp_i = i, tmp_j = j;
+
+                    if (camera->isStratified()) {
+                        tmp_i = Eigen::internal::random<float>(i,i+1);
+                        tmp_j = Eigen::internal::random<float>(j,j+1);
+                    }
+
+                    ray.direction = (camF + camX * (2.0*float(x + tmp_i/((double) camera->sampleCount()) + offset[0])/float(camera->vpWidth())  - 1.)
+                                                             - camY * (2.0*float(y + tmp_j/((double) camera->sampleCount()) + offset[1])/float(camera->vpHeight()) - 1.)).normalized();
+
+                    block.put(Vector2f(x+offset[0], y+offset[1]), integrator->Li(scene,ray));
+                }
+            }
+        }
+    }
+}</code></pre>
+       </div>
+
        <figure>
            <img src="image/2.2. tw-8-stratifié (all).png" width="500" alt="Échantillonnage stratifié – 8x8 rayons par pixel"/>
            <figcaption>Échantillonnage stratifié – 8x8 rayons par pixel</figcaption>
        </figure>
-
-
 
        <figure>
            <center>
@@ -137,21 +203,21 @@
        </figure>
 
 
-      <h4>2.3. Bonus : filtre de reconstruction</h4>
+      <h3>2.3. Bonus : filtre de reconstruction</h3>
 
-      <h3>3. Sources étendues</h3>
+      <h2>3. Sources étendues</h2>
 
-      <h4>3.1. Échantillonnage de Monte-Carlo</h4>
+      <h3>3.1. Échantillonnage de Monte-Carlo</h3>
       On va rajouter dans l'intégrateur Whitted, une gestion différentes des lights pour les AreaLight (source lumineuse étendue rectangulaire). <br>
 	Pour cela, on va prendre un point aléatoirement dans l'AreaLight (calculé à l'aide de sa tangente, sa bitangente, son point et sa taille). </br>
       <br>
-      <figure class="highlight" style="text-align:left">
-          <pre><code class=" hljs cpp">const AreaLight* light = dynamic_cast<const AreaLight*>(*it);
+      <div class="highlight">
+          <pre><code class="cpp javascript">const AreaLight* light = dynamic_cast<const AreaLight*>(*it);
 
 float uSize = Eigen::internal::random<float>(0, light->size()[0]);
 float vSize = Eigen::internal::random<float>(0, light->size()[1]);
 Point3f uPos = light->position() + uSize * light->uVec() + vSize * light->vVec();</code></pre>
-      </figure>
+      </div>
       <br>
       Ensuite on calcule la direction vers ce point (<code>lightDir = uPos - pos</code>) et sa distance (<code>dist = lightDir.norm();</code>).
 
@@ -169,12 +235,27 @@ Point3f uPos = light->position() + uSize * light->uVec() + vSize * light->vVec()
           <figcaption>Échantillonnage stratifié source de taille 0.5x0.5 (gauche) et 0.1x0.1 (droite) – 8x8 rayons par pixel</figcaption>
       </figure>
 
-      <h4>3.2. Source texturée</h4>
+      <h3>3.2. Source texturée</h3>
       On va cette fois-ci moduler l'intensité de la source étendue à l'aide de la texture suivante :
       <figure>
           <img src="image/3.2 light_source.png" width="75" alt="texture light_source"/>
           <figcaption>Texture light_source</figcaption>
       </figure>
+
+      <div class="highlight">
+          <pre><code class="cpp javascript">Color3f AreaLight::intensity(const Point3f &x, const Point3f &y) const {
+    Vector3f dir = (x-y);
+    float d2 = dir.squaredNorm();
+    Color3f intensity = m_intensity / d2;
+    if(m_texture) {
+        Vector3f pos = y - position() + size()[0]/2 * uVec() + size()[1]/2 * vVec();
+        int x = m_texture->rows() * pos.dot(uVec()) / (float) size()[0];
+        int y = m_texture->cols() * pos.dot(vVec()) / (float) size()[1];
+        intensity *= m_texture[0](x,y);
+    }
+    return std::max(0.f,dir.normalized().dot(direction())) * intensity;
+}</code></pre>
+      </div>
 
       Voic les 4 affichages que l'on peut obtenir séparément à partir de la texture :
 
@@ -213,9 +294,9 @@ Point3f uPos = light->position() + uSize * light->uVec() + vSize * light->vVec()
           <figcaption>Échantillonnage stratifié – 8x8 rayons par pixel – source étendue texturée</figcaption>
       </figure>
 
-      <h4>3.3. Bonus : échantillonnage stratifié</h4>
+      <h3>3.3. Bonus : échantillonnage stratifié</h3>
 
-      <h3>4. Occlusion Ambiante</h3>
+      <h2>4. Occlusion Ambiante</h2>
       Comme dit dans l'énoncé : " L'<i>ambient occlusion</i> est une technique de rendu faisant l'hypothèse qu'une surface
       (diffuse) reçoit une illumination uniforme depuis toutes les directions et que la visibilité est le seul effet important". <br />
       L'occlusion ambiante au point x, noté L(x), est défini comme étant "l'intégrale de la fonction de visibilité V sur l’hémisphère
@@ -227,9 +308,53 @@ Point3f uPos = light->position() + uSize * light->uVec() + vSize * light->vVec()
       aucune intéraction alors on incrémente L(x) de $\frac{\cos(\theta)}{\pi}$ que l'on pondère par la pdf (<i>probability density function</i>)
       de l'hémisphère. On moyenne ensuite notre somme (qui est en fait une approximation d'intégrale par Monte-Carlo) par le nombre de rayon lancé.
 
-      <h4>4.1. Échantillonnage d'un hémisphère</h4>
+      <h3>4.1. Échantillonnage d'un hémisphère</h3>
       Avant de pouvoir calculer l'occlusion ambiante, on a besoin de générer des points aléatoirement sur un hémisphère et de connaitre la pdf associé. <br />
       Pour cela on a d'abord implémenté la génération aléatoire de point sur un disque et sa pdf.
+      <div class="highlight">
+          <pre><code class="cpp javascript">Point2f Warp::squareToUniformDisk(const Point2f &sample)
+{
+    // Prise en compte de l'aire
+    float r = sqrt(sample.x());
+    float phi = 2 * M_PI * sample.y();
+
+    return Point2f(r * cos(phi), r * sin(phi));
+
+    /*
+    // Concentric Map
+    float x = (sample.x() - 0.5) * 2;
+    float y = (sample.y() - 0.5) * 2;
+    float r, phi;
+
+    if (x > -y) {
+        if (x > y) {
+            r = x;
+            phi = (M_PI / 4) * (y/x);
+        } else {
+            r = y;
+            phi = (M_PI / 4) * (-x/y) + (M_PI/2);
+        }
+    } else {
+        if (x < y) {
+            r = -x;
+            phi = (M_PI / 4) * (-y/-x) + M_PI;
+        } else {
+            r = -y;
+            phi = (M_PI / 4) * (x/-y) - (M_PI/2);
+        }
+    }
+
+    return Point2f(r * cos(phi), r * sin(phi));
+    */
+}
+
+float Warp::squareToUniformDiskPdf(const Point2f &p)
+{
+    float dist = sqrt(p.x()*p.x() + p.y()*p.y());
+    return (dist > 1) ? 0 : (1.0/M_PI);
+}</code></pre>
+      </div>
+
       <figure>
           <center>
               <table>
@@ -253,6 +378,20 @@ Point3f uPos = light->position() + uSize * light->uVec() + vSize * light->vVec()
       </figure>
 
       On a ensuite implémenter pour un hémisphère, avec une répartition uniforme.
+
+      <div class="highlight">
+          <pre><code class="cpp javascript">Vector3f Warp::squareToUniformHemisphere(const Point2f &sample) {
+    float phi = 2 * M_PI * sample.x();
+    float theta = acos(sample.y());
+    return Vector3f(sin(theta) * cos(phi), sin(theta) * sin(phi), sample.y());
+}
+
+float Warp::squareToUniformHemispherePdf(const Vector3f &v) {
+    float dist = sqrt(v.x()*v.x() + v.y()*v.y() + v.z()*v.z());
+    return (dist > 1 + Epsilon) || (dist < 1 - Epsilon) || (v.z() < 0) ? 0 : (1.0/(2.0*M_PI));
+}</code></pre>
+      </div>
+
       <figure>
           <center>
               <table>
@@ -269,6 +408,20 @@ Point3f uPos = light->position() + uSize * light->uVec() + vSize * light->vVec()
       </figure>
 
      Et enfin on a implémenté pour un hémisphère, avec une répartition cette fois-ci pondérée par un cosinus.
+
+     <div class="highlight">
+         <pre><code class="cpp javascript">Vector3f Warp::squareToCosineHemisphere(const Point2f &sample) {
+    float phi = 2 * M_PI * sample.x();
+    float theta = acos(sqrt(1 - sample.y()));
+    return Vector3f(sin(theta) * cos(phi), sin(theta) * sin(phi), sqrt(1 - sample.y()));
+}
+
+float Warp::squareToCosineHemispherePdf(const Vector3f &v) {
+    float dist = sqrt(v.x()*v.x() + v.y()*v.y() + v.z()*v.z());
+    return (dist > 1 + Epsilon) || (dist < 1 - Epsilon) || (v.z() < 0) ? 0 : (v.z() / M_PI);
+}</code></pre>
+     </div>
+
       <figure>
           <center>
               <table>
@@ -284,7 +437,7 @@ Point3f uPos = light->position() + uSize * light->uVec() + vSize * light->vVec()
           <figcaption>Échantillonnage pondéré par le cosinus de l'hémisphère autour du pôle (0,0,1)</figcaption>
       </figure>
 
-      <h4>4.2. Calcul de l'AO</h4>
+      <h3>4.2. Calcul de l'AO</h3>
       On implémente ensuite l'occlusion ambiante dans l'intégrateur $AO$ en lançant $$m\_sampleCount$$ rayons d'ombres,
       comme expliqué dans la partie 4. <br />
       Pour se faire, on va créer un repère avec comme origine le point $x$ :
@@ -302,8 +455,8 @@ Vector3f v = normal.cross(u);</code></pre>
       à l'angle entre la normal au point x et le rayon d'ombre. Et l'on pondère par la pdf. <br />
       Aprés avoir fait ça pour chaque rayon d'ombre, on pondère par le nombre de rayons d'ombre <code>m_sampleCount</code>.
 
-      <figure class="highlight" style="text-align:left">
-          <pre><code class=" hljs cpp">for (int i = 0; i < m_sampleCount; i++) {
+      <div class="highlight">
+          <pre><code class="cpp javascript">for (int i = 0; i < m_sampleCount; i++) {
     float x = Eigen::internal::random<float>(0,1);
     float y = Eigen::internal::random<float>(0,1);
 
@@ -321,7 +474,7 @@ Vector3f v = normal.cross(u);</code></pre>
         L += (theta / M_PI) / pdf;
     }
 }</code></pre>
-        </figure>
+        </div>
       <figure>
           <center>
               <table>

@@ -31,7 +31,7 @@ Viewer::Viewer() :
             m_srgb = value ? 1 : 0;
         }
     );
-    
+
     m_slider = new Slider(m_panel);
     m_slider->setValue(0.5f);
     m_slider->setFixedWidth(150);
@@ -284,26 +284,26 @@ void renderBlock(Scene* scene, ImageBlock& block)
 
     /* For each pixel and pixel sample */
     for (int y=0; y<size.y(); ++y) {
-      for (int x=0; x<size.x(); ++x) {
-	for (double i = 0; i < camera->sampleCount(); i++) {
-	  for (double j = 0; j < camera->sampleCount(); j++) {
-            // compute the primary ray parameters
-            Ray ray;
-            ray.origin = camera->position();
-	    double tmp_i = i, tmp_j = j;
-	    
-	    if (camera->isStratified()) {
-	      tmp_i = Eigen::internal::random<float>(i,i+1);
-	      tmp_j = Eigen::internal::random<float>(j,j+1);
-	    }
-	    
-	    ray.direction = (camF + camX * (2.0*float(x + tmp_i/((double) camera->sampleCount()) + offset[0])/float(camera->vpWidth())  - 1.)
-			          - camY * (2.0*float(y + tmp_j/((double) camera->sampleCount()) + offset[1])/float(camera->vpHeight()) - 1.)).normalized();
-	    
-            block.put(Vector2f(x+offset[0], y+offset[1]), integrator->Li(scene,ray));
-	  }
-	}
-      }
+        for (int x=0; x<size.x(); ++x) {
+            for (double i = 0; i < camera->sampleCount(); i++) {
+                for (double j = 0; j < camera->sampleCount(); j++) {
+                    // compute the primary ray parameters
+                    Ray ray;
+                    ray.origin = camera->position();
+                    double tmp_i = i, tmp_j = j;
+
+                    if (camera->isStratified()) {
+                        tmp_i = Eigen::internal::random<float>(i,i+1);
+                        tmp_j = Eigen::internal::random<float>(j,j+1);
+                    }
+
+                    ray.direction = (camF + camX * (2.0*float(x + tmp_i/((double) camera->sampleCount()) + offset[0])/float(camera->vpWidth())  - 1.)
+                    - camY * (2.0*float(y + tmp_j/((double) camera->sampleCount()) + offset[1])/float(camera->vpHeight()) - 1.)).normalized();
+
+                    block.put(Vector2f(x+offset[0], y+offset[1]), integrator->Li(scene,ray));
+                }
+            }
+        }
     }
 }
 

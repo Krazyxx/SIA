@@ -24,7 +24,7 @@ int main()
   double a = 0.0;              // left endpoint
   double b = 1.0;               // right endpoint
   int N = 500;
-    
+
   double varest, mc, va;
   std::vector<double> x, err, var_va, var_ea, var_vn, var_en;
 
@@ -32,10 +32,10 @@ int main()
   {
     mc = int_mc(f, varest, a, b, n);
     va = var_anal(n);
-    
+
     x.push_back(n);
     err.push_back(fabs(mc-1.0));
-    
+
     var_va.push_back(va);           // variance analyptique
     var_ea.push_back(sqrt(va));     // écart-type analyptique
 
@@ -52,33 +52,31 @@ int main()
 
   //g.set_style("lines").plot_xy(x,var_vn,"variance numerique");
   g.set_style("lines").plot_xy(x,var_en,"ecart-type numerique");
-  
+
   wait_for_key();
 
   return 0;
 }
 
-/* 
-   Fonction à intégrer 
+/*
+   Fonction à intégrer
 */
 double f(double x)
 {
   double y = 5 * x * x * x * x;
   return y;
-}    
+}
 
 double var_anal(int n)
 {
   return (16./9.)/((double) n);
 }
 
-/* 
-   Integration de Monte-Carlo
-*/
+/* Integration de Monte-Carlo */
 double int_mc(double(*f)(double), double& varest, double a, double b, int n)
 {
   uniform_real_distribution<float> distr (a,b);
-  
+
   double res = 0, res2 = 0;;
   for (int i = 0; i < n; i++) {
     double random = distr(gener);
@@ -88,9 +86,9 @@ double int_mc(double(*f)(double), double& varest, double a, double b, int n)
   }
   res /= n;
   res2 /= n;
-  
+
   varest = (1./(n-1.)) * (res2 - res * res);
-    
+
   return res;
 }
 
