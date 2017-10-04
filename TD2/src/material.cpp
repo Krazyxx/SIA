@@ -1,5 +1,5 @@
 #include "material.h"
-
+#include "warp.h"
 #include <Eigen/Geometry>
 #include <iostream>
 #include <math.h>
@@ -11,6 +11,29 @@ void Material::loadTextureFromFile(const std::string& fileName)
     else
         m_texture = new Bitmap(fileName);
 }
+
+
+Vector3f Material::us(Normal3f normal, float& pdf) const
+{
+    Point2f p = Point2f(Eigen::internal::random<float>(0,1),
+                        Eigen::internal::random<float>(0,1));
+    Vector3f d = Warp::squareToCosineHemisphere(p);
+    pdf = Warp::squareToCosineHemispherePdf(d);
+
+    Vector3f u = normal.unitOrthogonal();
+    Vector3f v = normal.cross(u);
+    Vector3f r = d.x() * u + d.y() * v + d.z() * normal;
+
+    return r;
+}
+
+Vector3f Material::is(Normal3f normal, Vector3f direction) const
+{
+
+    return Vector3f(0.0,0.0,0.0);
+}
+
+
 
 Diffuse::Diffuse(const PropertyList &propList)
 {

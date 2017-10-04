@@ -15,6 +15,9 @@ public:
     virtual Color3f transmissivness() const { return m_transmissivness; }
     virtual float etaA() const { return m_etaA; }
     virtual float etaB() const { return m_etaB; }
+    
+    Vector3f us(Normal3f normal, float& pdf) const;
+    Vector3f is(Normal3f normal, Vector3f direction) const;
 
     /// evaluate the BRDF
     virtual Color3f brdf(const Vector3f& viewDir, const Vector3f& lightDir, const Normal3f& normal, const Vector2f& uv) const = 0;
