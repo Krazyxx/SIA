@@ -196,6 +196,13 @@ void Viewer::drawContents()
                 glUniform3f(m_flatProgram.uniform("color"),0.9f,0.f,0.f);
                 Point::draw(&m_flatProgram, x);
                 Line::draw(&m_flatProgram, x, x + 0.25f * normal);
+
+                const Material* material = m_hit.shape()->material();
+                glUniform3f(m_flatProgram.uniform("color"),0.f,0.9f,0.f);
+                for(int i = 0; i < 100; ++i){
+                    Vector3f dir = static_cast<const Ward*>(material)->is(normal,-m_ray.direction);
+                    Line::draw(&m_flatProgram, x, x + 0.1f * dir);
+                }
             }
         }
     }

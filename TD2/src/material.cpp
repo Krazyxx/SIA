@@ -12,7 +12,7 @@ void Material::loadTextureFromFile(const std::string& fileName)
         m_texture = new Bitmap(fileName);
 }
 
-
+// Uniform Sampling
 Vector3f Material::us(Normal3f normal, float& pdf) const
 {
     Point2f p = Point2f(Eigen::internal::random<float>(0,1),
@@ -26,14 +26,6 @@ Vector3f Material::us(Normal3f normal, float& pdf) const
 
     return r;
 }
-
-Vector3f Material::is(Normal3f normal, Vector3f direction) const
-{
-
-    return Vector3f(0.0,0.0,0.0);
-}
-
-
 
 Diffuse::Diffuse(const PropertyList &propList)
 {
@@ -76,5 +68,35 @@ Color3f Diffuse::diffuseColor(const Vector2f& uv) const
     }
     return fColor;
 }
+
+// Importance Sampling
+Vector3f Ward::is(Normal3f normal, Vector3f direction) const
+{
+    float u = Eigen::internal::random<float>(0,1);
+    float v = Eigen::internal::random<float>(0,1);
+
+    float angle = 2 * M_PI * v;
+    float phi_h = atan((this->m_alphaY/this->m_alphaX) * tan(angle));
+
+    //int quadrant_phi = floor(phi_h / (M_PI/2));
+    //int quadrant_dir = floor(angle / (M_PI/2));
+
+    float squared_cos = (cos(phi_h) * cos(phi_h)) / (this->m_alphaX * this->m_alphaX);
+    float squared_sin = (sin(phi_h) * sin(phi_h)) / (this->m_alphaY * this->m_alphaY);
+    float theta_h = atan(sqrt(-log(u) / (squared_cos + squared_sin)));
+
+    Vector3f h(sin(theta_h) * cos(phi_h), sin(theta_h) * sin(phi_h), cos(theta_h));
+
+    Vector3f d(0,1,0);
+    Vector3f x = (d - (d.dot(normal) * normal)).normalized();
+    Vector3f y = x.cross(normal);
+    h = h.x() * x + h.y() * y + h.z() * normal;
+
+    Vector3f o = 2.0 * direction.dot(h) * h - direction;
+
+
+    return o;
+}
+
 
 REGISTER_CLASS(Diffuse, "diffuse")

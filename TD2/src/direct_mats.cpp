@@ -24,13 +24,14 @@ public:
 
         for(int i = 0; i < m_sampleCount; ++i){
             if(m_IS) {
-                /*
-                Vector3f r = material->is(normal,-ray.direction);
+                
+                Vector3f r = static_cast<const Ward*>(material)->is(normal,-ray.direction);
                 if(normal.dot(r) < 0) { r=-r; }
                 Color3f envmap = scene->backgroundColor(r);
-                Color3f BRDF = material->premultBrdf(-ray.direction, r, normal, hit.texcoord());
+                //Color3f BRDF = material->premultBrdf(-ray.direction, r, normal, hit.texcoord());
+                Color3f BRDF = material->brdf(-ray.direction, r, normal, hit.texcoord());
                 radiance += (envmap * BRDF);
-                */
+
             } else {
                 float pdf;
                 Vector3f r = material->us(normal,pdf); // random half-direction
