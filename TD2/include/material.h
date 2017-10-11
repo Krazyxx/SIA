@@ -98,6 +98,7 @@ public:
     Color3f reflectivity() const { return m_reflectivity; }
 
     Color3f brdf(const Vector3f& viewDir, const Vector3f& lightDir, const Normal3f& normal, const Vector2f& uv) const;
+    Color3f premultBrdf(const Vector3f& viewDir, const Vector3f& lightDir, const Normal3f& normal, const Vector2f& uv) const;
 
     std::string toString() const;
 
