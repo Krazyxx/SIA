@@ -24,8 +24,8 @@
     <material type="ward">
       <color name="diffuse" value="0.2, 0.2, 0.2" />
       <color name="specular" value="0.7, 0.7, 0.7" />
-      <float name="alphaX" value="0.5"/>
-      <float name="alphaY" value="0.1"/>
+      <float name="alphaX" value="0.1"/>
+      <float name="alphaY" value="0.5"/>
     </material>
   </shape>
 
