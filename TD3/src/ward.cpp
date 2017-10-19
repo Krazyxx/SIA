@@ -52,8 +52,11 @@ Vector3f Ward::is(Normal3f normal, Vector3f direction) const
     float angle = 2 * M_PI * v;
     float phi_h = atan((this->m_alphaY/this->m_alphaX) * tan(angle));
 
-    //int quadrant_phi = floor(phi_h / (M_PI/2));
-    //int quadrant_dir = floor(angle / (M_PI/2));
+    if (v > 0.25 && v <= 0.5) {
+        phi_h += M_PI;
+    } else if (v > 0.5 && v < 0.75) {
+        phi_h -= M_PI;
+    }
 
     float squared_cos = (cos(phi_h) * cos(phi_h)) / (this->m_alphaX * this->m_alphaX);
     float squared_sin = (sin(phi_h) * sin(phi_h)) / (this->m_alphaY * this->m_alphaY);

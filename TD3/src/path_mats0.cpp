@@ -2,12 +2,11 @@
 #include "scene.h"
 #include "material.h"
 #include "areaLight.h"
-#include "warp.h"
 
-class Whitted : public Integrator
+class PathMats : public Integrator
 {
 public:
-    Whitted(const PropertyList &props) {
+    PathMats(const PropertyList &props) {
         m_maxRecursion = props.getInteger("maxRecursion",4);
     }
 
@@ -30,6 +29,7 @@ public:
 
             const Material* material = hit.shape()->material();
 
+            // For shapes emitting light (an area light is placed aside them).
             if (hit.shape()->isEmissive()) {
                 const AreaLight *light = static_cast<const AreaLight*>(hit.shape()->light());
                 return std::max(0.f, normal.dot(-ray.direction)) * light->intensity(pos + light->direction(), pos);
@@ -43,11 +43,9 @@ public:
                 const AreaLight* aLight = dynamic_cast<const AreaLight*>(*it);
                 Point3f y;
                 if(aLight) {
-
-                    Point2f p = Point2f(Eigen::internal::random<float>(0,1), Eigen::internal::random<float>(0,1));
                     y = aLight->position()
-                              + aLight->size()[0]*aLight->uVec() * (p.x())// * 0.5f)
-                              + aLight->size()[1]*aLight->vVec() * (p.y());// * 0.5f);
+                              + aLight->size()[0]*aLight->uVec() * Eigen::internal::random<float>(-0.5,0.5)
+                              + aLight->size()[1]*aLight->vVec() * Eigen::internal::random<float>(-0.5,0.5);
 
                     dist = (pos-y).norm();
                     lightDir = (y-pos).normalized();
@@ -59,9 +57,9 @@ public:
                 scene->intersect(shadow_ray,shadow_hit);
                 Color3f attenuation = Color3f(1.f);
                 if(shadow_hit.t()<dist){
-                    if(!shadow_hit.shape()->isEmissive())
-                        attenuation = 0.5f * shadow_hit.shape()->material()->transmissivness();
-                    if((attenuation <= 1e-6).all())
+//                    if(!shadow_hit.shape()->isEmissive())
+//                        attenuation = 0.5f * shadow_hit.shape()->material()->transmissivness();
+//                    if((attenuation <= 1e-6).all())
                         continue;
                 }
 
@@ -71,6 +69,20 @@ public:
                     radiance += aLight->intensity(pos,y) * cos_term * brdf * attenuation;
                 else
                     radiance += (*it)->intensity(pos) * cos_term * brdf * attenuation;
+            }
+
+            Color3f color = material->ambientColor();
+            float albedo = (color.r() + color.g() + color.b()) / 3.f;
+            if (albedo  > Eigen::internal::random(0.f, 1.f) || ray.recursionLevel <= 3) {
+                Vector3f r = material->is(normal, ray.direction);
+                Ray reflexion_ray(pos + hit.normal()*Epsilon, r);
+                reflexion_ray.recursionLevel = ray.recursionLevel + 1;
+                // float cos_term = std::max(0.f,r.dot(normal));
+                Color3f brdf = material->premultBrdf(-ray.direction, r, normal, hit.texcoord());
+                Color3f indirect = (Li(scene, reflexion_ray) /* cos_term */ * brdf);
+                if(albedo > Epsilon && ray.recursionLevel > 3)
+                        indirect /= albedo;
+                radiance += indirect;
             }
 
             // reflexions
@@ -117,4 +129,4 @@ private:
     int m_maxRecursion;
 };
 
-REGISTER_CLASS(Whitted, "whitted")
+REGISTER_CLASS(PathMats, "path_mats")

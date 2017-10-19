@@ -104,6 +104,7 @@ set(SRCS
     src/warp.cpp
     src/ao.cpp
     src/direct_mats.cpp
+    src/path_mats.cpp
 )
 
 add_executable(sia_raytracer ${SRCS})

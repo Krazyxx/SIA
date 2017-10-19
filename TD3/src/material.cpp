@@ -27,6 +27,19 @@ Vector3f Material::us(Normal3f normal, float& pdf) const
     return r;
 }
 
+Vector3f Material::is(Normal3f normal, Vector3f direction) const
+{
+    float pdf;
+    Vector3f dir = us(normal, pdf);
+    return dir / pdf;
+}
+
+Color3f Material::premultBrdf(const Vector3f& viewDir, const Vector3f& lightDir, const Normal3f& normal, const Vector2f& uv) const
+{
+    return brdf(viewDir, lightDir, normal, uv);
+}
+
+
 Diffuse::Diffuse(const PropertyList &propList)
 {
     m_diffuseColor = propList.getColor("diffuse",Color3f(0.2));
