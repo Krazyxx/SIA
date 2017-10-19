@@ -1,0 +1,92 @@
+<?xml version='1.0' encoding='utf-8'?>
+
+<scene>
+	<color name="background" value="0.0, 0.0, 0.0"/>
+
+	<integrator type="photonmapper">
+		<float name="photonRadius" value="0.05"/>
+		<integer name="photonCount" value="10000000"/>
+	</integrator>
+
+	<camera type="perspective">
+		<float name="fov" value="27.7856"/>
+		<transform name="toWorld">
+			<scale value="-1,1,1"/>
+			<lookat target="0, 0.893051, 4.41198" origin="0, 0.779769, 4.11159" up="0, 1, 0"/>
+		</transform>
+
+		<integer name="height" value="600"/>
+		<integer name="width" value="800"/>
+
+		<boolean name="stratified" value="true"/>
+		<integer name="samples" value="25"/>
+	</camera>
+
+	<shape type="mesh">
+		<string name="filename" value="meshes/walls.obj"/>
+
+		<material type="diffuse">
+			<color name="diffuse" value="0.725 0.71 0.68"/>
+		</material>
+	</shape>
+
+	<shape type="mesh">
+		<string name="filename" value="meshes/rightwall.obj"/>
+
+		<material type="diffuse">
+			<color name="diffuse" value="0.161 0.133 0.427"/>
+		</material>
+	</shape>
+
+	<shape type="mesh">
+		<string name="filename" value="meshes/leftwall.obj"/>
+
+		<material type="diffuse">
+			<color name="diffuse" value="0.630 0.065 0.05"/>
+		</material>
+	</shape>
+	<shape type="sphere">
+		<float name="radius" value="0.35"/>
+		<string name="filename" value="meshes/sphere1.obj"/>
+		<material type="phong">
+	     <color name="diffuse" value="0,0,0" />
+	     <color name="reflectivity" value="1.0,1.0,1.0"/>
+	     <color name="transmissivness" value="0.0, 0.0, 0.0"/>
+	     <float name="etaA" value="1"/>
+	     <float name="etaB" value="1.33"/>
+	     <color name="specular" value="0, 0, 0" />
+	     <float name="exponent" value="16"/>
+	   </material>
+	   <transform name="toWorld">
+     	 <translate value="-0.4, 0.35, -0.3"/>
+   	   </transform>
+	</shape>
+
+	<shape type="sphere">
+		<float name="radius" value="0.3"/>
+		<string name="filename" value="meshes/sphere1.obj"/>
+		<material type="phong">
+	     <color name="diffuse" value="0,0.0,0" />
+	     <color name="reflectivity" value="0.0,0.0,0.0"/>
+	     <color name="transmissivness" value="1.0, 1.0, 1.0"/>
+	     <float name="etaA" value="1"/>
+	     <float name="etaB" value="1.33"/>
+	     <color name="specular" value="0, 0, 0" />
+	     <float name="exponent" value="16"/>
+	   </material>
+	   <transform name="toWorld">
+     	 <translate value="0.45, 0.3, 0.4"/>
+   	   </transform>
+	</shape>
+
+	<light type="areaLight">
+  		<color name="intensity" value="5, 5, 5" />
+		<shape type="quad">
+			<vector name="size" value="0.5, 0.5, 0" />
+			<transform name="toWorld">
+				<rotate angle="90" axis="1,0,0"/>
+     			<translate value="0.1, 1.58, -0.1"/>
+   			</transform>
+   		</shape>
+ 	</light>
+</scene>

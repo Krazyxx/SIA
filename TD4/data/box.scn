@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<scene>
+  <color name="background" value="0.2, 0.2, 0.2"/>
+
+  <integrator type="path_mats">
+    <integer name="maxRecursion" value="8"/>
+  </integrator>
+
+  <camera type="perspective">
+   <float name="fieldOfView" value="90.0" /> 
+   <integer name="width" value="512"/>
+   <integer name="height" value="512"/>
+   <integer name="samples" value="20"/>
+   <boolean name="stratified" value="true"/>
+   <transform name="toWorld">
+     <lookat origin="0.75, 0, 0.25" target="0, 0, 0.1" up="0, 0, 1"/>
+   </transform>
+  </camera>
+
+  <shape type="sphere">
+   <float name="radius" value="0.2"/>
+   <material type="ward">
+     <color name="diffuse" value="0.2, 0.2, 0.2" />
+     <color name="specular" value="0.7, 0.7, 0.7" />
+     <float name="alphaX" value="0.9"/>
+     <float name="alphaY" value="0.1"/>
+   </material>
+   <transform name="toWorld">
+     <translate value="0.2, 0, 0.2"/>
+   </transform>
+ </shape>
+
+ <!-- floor grey plan -->
+ <shape type="plane">
+   <material type="diffuse">
+     <color name="diffuse" value="0.7, 0.7, 0.7" />
+   </material>
+ </shape>
+
+ <!-- back grey plan -->
+ <shape type="plane">
+   <material type="diffuse">
+     <color name="diffuse" value="0.7, 0.7, 0.7" />
+   </material>
+   <transform name="toWorld">
+    <rotate angle="90" axis="0,1,0"/>
+     <translate value="-1.0, 0.0, 0.0"/>
+   </transform>
+ </shape>
+
+ <!-- left red plan -->
+ <shape type="plane">
+   <material type="diffuse">
+     <color name="diffuse" value="0.7, 0.0, 0.0" />
+   </material>
+   <transform name="toWorld">
+     <translate value="0,-1.0,-1.0"/>
+     <rotate angle="-90" axis="1,0,0"/>
+   </transform>
+ </shape>
+
+ <!-- right blue plan -->
+ <shape type="plane">
+   <material type="diffuse">
+     <color name="diffuse" value="0.0, 0.0, 0.7" />
+   </material>
+   <transform name="toWorld">
+     <rotate angle="90" axis="1,0,0"/>
+     <translate value="0.0, 1.0, 1.0"/>
+   </transform>
+ </shape>
+
+ <light type="areaLight">
+   <color name="intensity" value="5.0, 5.0, 5.0" />
+   <shape type="quad">
+      <vector name="size" value="0.5, 0.5, 0" />
+      <transform name="toWorld">
+        <rotate angle="180" axis="1,0,0"/>
+        <translate value="0.0, 0.0, 2.0"/>
+      </transform>
+      </shape>
+ </light>
+
+</scene>
