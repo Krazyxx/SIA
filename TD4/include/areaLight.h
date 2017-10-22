@@ -48,4 +48,3 @@ protected:
 };
 
 #endif // AREALIGHT_H
-

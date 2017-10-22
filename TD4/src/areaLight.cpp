@@ -1,6 +1,7 @@
 #include "areaLight.h"
 #include "material.h"
 #include "glPrimitives.h"
+#include "warp.h"
 
 AreaLight::AreaLight(const PropertyList &propList)
     : Light(propList.getColor("intensity", Color3f(1.f)))
@@ -58,7 +59,22 @@ void AreaLight::loadTexture(const std::string &filename) {
 
 Photon AreaLight::samplePhoton() const
 {
-    // TODO
+    float x = Eigen::internal::random<float>(-0.5,0.5);
+    float y = Eigen::internal::random<float>(-0.5,0.5);
+
+    Point3f pos = this->position() + x * this->uVec() * this->size()[0] + y * this->vVec() * this->size()[1];
+
+    x = Eigen::internal::random<float>(0,1);
+    y = Eigen::internal::random<float>(0,1);
+
+    Vector3f randDir = Warp::squareToCosineHemisphere(Point2f(x,y));
+    Vector3f dir = randDir.x() * this->uVec() + randDir.y() * this->vVec() + randDir.z() * this->direction();
+
+    float A = this->size()[0] * this->size()[1]; // Aire de l'AreaLight
+    Color3f Le = this->m_intensity; // radiance
+    Color3f power = M_PI * A * Le; // puissance du photon
+
+    return Photon(pos, dir, power);
 }
 
 void AreaLight::draw()

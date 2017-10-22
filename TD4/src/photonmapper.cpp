@@ -58,6 +58,37 @@ public:
         /* Trace photons */
         m_nPaths = 0;
 
+        int nbPhoton = 0;
+        while(nbPhoton < m_photonCount) {
+            Photon photon1 = scene->samplePhoton();
+            Point3f pos1 = photon1.position;
+            Color3f power1 = photonAL.getPower();
+            Vector3f dir1 = photonAL.getDirection();
+
+            Ray ray(pos, dir);
+            Hit hit;
+            scene->intersect(ray, hit);
+            if (!hitPhoton.foundIntersection()) { continue; }
+            // S'il y a bien eu une intersection on stocke le photon
+
+
+            Point3f pos2 = rayPhotonAL.at(hitPhotonAL.t());
+            const Material* material = hitPhotonAL.shape()->material();
+            const Diffuse* diffuse = static_cast<const Diffuse*>(material);
+            if (diffuse != NULL) { // Si le matériaux du photon est diffuse
+                float pdf;
+                Vector3f dir = material->is(hitPhoton.normal(), -rayPhoton.direction, pdf);
+                Color3f brdf = material->premultBrdf(dirAL, dir, hitPhoton.normal(), hit.texcoord());
+                Color3f power =
+                Photon photon(posPhoton, dir, power);
+            }
+
+
+
+            nbPhoton++;
+            // } while( power low );
+        }
+
         /* Build the photon map */
         m_photonMap->build();
 
