@@ -53,40 +53,37 @@ public:
             m_photonRadius = (aabb.max()-aabb.min()).norm() / 500.0f;
         }
 
-        /// TODO
-
         /* Trace photons */
         m_nPaths = 0;
 
-        int nbPhoton = 0;
-        while(nbPhoton < m_photonCount) {
+        while(m_photonMap->size() < (unsigned int) m_photonCount) {
             Photon photon1 = scene->samplePhoton();
-            Point3f pos1 = photon1.position;
-            Color3f power1 = photonAL.getPower();
-            Vector3f dir1 = photonAL.getDirection();
 
-            Ray ray(pos, dir);
-            Hit hit;
-            scene->intersect(ray, hit);
-            if (!hitPhoton.foundIntersection()) { continue; }
-            // S'il y a bien eu une intersection on stocke le photon
+            Color3f ratio = Color3f(0);
+            int tmp = 0; // TODO : remove
+            do {
+                Ray ray(photon1.getPosition(), photon1.getDirection());
+                Hit hit;
+                scene->intersect(ray, hit);
+                if (!hit.foundIntersection()) { break; }
 
-
-            Point3f pos2 = rayPhotonAL.at(hitPhotonAL.t());
-            const Material* material = hitPhotonAL.shape()->material();
-            const Diffuse* diffuse = static_cast<const Diffuse*>(material);
-            if (diffuse != NULL) { // Si le matériaux du photon est diffuse
+                Point3f pos2 = ray.at(hit.t());
+                const Material* material = hit.shape()->material();
                 float pdf;
-                Vector3f dir = material->is(hitPhoton.normal(), -rayPhoton.direction, pdf);
-                Color3f brdf = material->premultBrdf(dirAL, dir, hitPhoton.normal(), hit.texcoord());
-                Color3f power =
-                Photon photon(posPhoton, dir, power);
-            }
+                Vector3f dir2 = material->is(hit.normal(), -ray.direction, pdf);
+                Color3f premultBrdf = material->premultBrdf(dir2, photon1.getDirection(), hit.normal(), hit.texcoord());
+                Color3f power2 = photon1.getPower() * premultBrdf;
+                Photon photon2(pos2, dir2, power2);
 
+                const Diffuse* diffuse = static_cast<const Diffuse*>(material);
+                if (diffuse != NULL) { m_photonMap->push_back(photon2); }
 
+                ratio = photon2.getPower().mean() / photon1.getPower().mean();
+                photon1 = photon2;
 
-            nbPhoton++;
-            // } while( power low );
+                float random = Eigen::internal::random<float>(0,1);
+                tmp++;
+            } while(tmp < 100 || m_photonMap->size() < (unsigned int) m_photonCount); //while(random < ratio.r());
         }
 
         /* Build the photon map */
