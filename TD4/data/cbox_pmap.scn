@@ -5,7 +5,7 @@
 
 	<integrator type="photonmapper">
 		<float name="photonRadius" value="0.05"/>
-		<integer name="photonCount" value="100"/> <!-- value="1000000"-->
+		<integer name="photonCount" value="100000"/> <!-- value="1000000"-->
 	</integrator>
 
 	<camera type="perspective">

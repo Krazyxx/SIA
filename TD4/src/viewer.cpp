@@ -304,7 +304,6 @@ void renderBlock(Scene* scene, ImageBlock& block)
     Vector3f camF = camera->direction() * camera->nearDist();
 
     Integrator* integrator = scene->integrator();
-    integrator->preprocess(scene);
 
     /* Clear the block contents */
     block.clear();
