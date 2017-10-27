@@ -57,10 +57,11 @@ public:
 
         /* Trace photons */
         m_nPaths = 0;
-        while(m_nPaths < m_photonCount) {
+        while(m_photonMap->size() < m_photonCount) {
+            m_nPaths++;
             Photon photon1 = scene->samplePhoton();
 
-            float random, ratio;
+            float random, russkayaRuletka;
             do {
                 Ray ray(photon1.getPosition(), photon1.getDirection());
                 Hit hit;
@@ -71,42 +72,56 @@ public:
                 const Material* material = hit.shape()->material();
                 float pdf;
                 Vector3f dir2 = material->is(hit.normal(), -ray.direction, pdf);
-                Color3f premultBrdf = material->premultBrdf(dir2, photon1.getDirection(), hit.normal(), hit.texcoord());
+                Color3f premultBrdf = material->premultBrdf(-ray.direction, dir2, hit.normal(), hit.texcoord());
                 Color3f power2 = photon1.getPower() * premultBrdf;
-                Photon photon2(pos2, dir2, power2);
+
+                /* TODO
+                // reflexions
+                if((material->reflectivity() > 1e-6).any()) {
+                    Vector3f r = (ray.direction - 2.*ray.direction.dot(hit.normal())*hit.normal()).normalized();
+                    Ray reflexion_ray(pos + hit.normal()*Epsilon, r);
+                    reflexion_ray.recursionLevel = ray.recursionLevel + 1;
+                    float cos_term = std::max(0.f,r.dot(normal));
+                    power2 += material->reflectivity() * Li(scene, reflexion_ray) * cos_term;
+                }
+
+                // refraction
+                if((material->transmissivness() > 1e-6).any())
+                {
+                    float etaA = material->etaA(), etaB = material->etaB();
+                    bool entering = -normal.dot(ray.direction) > 0;
+                    if(!entering) {
+                        std::swap(etaA,etaB);
+                        normal = -normal;
+                    }
+                    Vector3f r;
+                    if(refract(normal,ray.direction,etaA,etaB,r)) {
+                        Ray refraction_ray(pos - normal*Epsilon, r);
+                        refraction_ray.recursionLevel = ray.recursionLevel + 1;
+                        float cos_term = std::max(0.f,-r.dot(normal));
+                        power2 += material->transmissivness() * Li(scene, refraction_ray) * cos_term;
+                    }
+                }
+                */
 
                 if (!dynamic_cast<const Phong*>(material) &&
                     !dynamic_cast<const Ward*>(material)) {
+                    Photon photon2(pos2, -ray.direction, power2);
                     m_photonMap->push_back(photon2);
-                    m_nPaths++;
                 }
 
-                ratio = photon2.getPower().mean() / photon1.getPower().mean();
-                photon1 = photon2;
-
+                russkayaRuletka = power2.mean() / photon1.getPower().mean();
+                photon1 = Photon(pos2, dir2, power2);
                 random = Eigen::internal::random<float>(0,1);
-            } while(m_nPaths < m_photonCount && random < ratio);
+            } while(m_photonMap->size() < m_photonCount && photon1.getPower().mean() > Epsilon && random < russkayaRuletka);
         }
 
         /* Build the photon map */
         m_photonMap->build();
-
-        /* Now let's do a lookup to see if it worked */
-        std::vector<uint32_t> results;
-        m_photonMap->search(Point3f(0, 0, 0) /* lookup position */, m_photonRadius, results);
-
-        for (uint32_t i : results) {
-            const Photon &photon = (*m_photonMap)[i];
-            cout << "Found photon!" << endl;
-            cout << " Position  : " << photon.getPosition().toString() << endl;
-            cout << " Power     : " << photon.getPower().toString() << endl;
-            cout << " Direction : " << photon.getDirection().toString() << endl;
-        }
     }
 
     Color3f Li(const Scene *scene, const Ray & ray) const
     {
-
         Color3f radiance = Color3f::Zero();
 
         // stopping criteria:
@@ -122,6 +137,12 @@ public:
             Normal3f normal = hit.normal();
             Point3f pos = ray.at(hit.t());
 
+            // For shapes emitting light (an area light is placed aside them).
+            if (hit.shape()->isEmissive()) {
+                const AreaLight *light = static_cast<const AreaLight*>(hit.shape()->light());
+                return std::max(0.f, normal.dot(-ray.direction)) * light->intensity(pos + light->direction(), pos);
+            }
+
             const Material* material = hit.shape()->material();
 
             if (!dynamic_cast<const Phong*>(material) &&
@@ -133,7 +154,7 @@ public:
                 for (uint32_t i : results) {
                     const Photon &photon = (*m_photonMap)[i];
                     const Vector3f x = (pos - photon.getPosition()) / m_photonRadius;
-                    if (0 <= x.norm() && x.norm() <= 1) {
+                    if (x.norm() <= 1) {
                         const Color3f premultBrdf = material->premultBrdf(-ray.direction, photon.getDirection(), normal, hit.texcoord());
                         float K = (3 / M_PI) * (1 - x.squaredNorm()) * (1 - x.squaredNorm());
                         radiance += K * photon.getPower() * premultBrdf;
@@ -141,13 +162,6 @@ public:
                 }
 
                 return (radiance / (m_nPaths * m_photonRadius * m_photonRadius));
-            }
-
-
-            // For shapes emitting light (an area light is placed aside them).
-            if (hit.shape()->isEmissive()) {
-                const AreaLight *light = static_cast<const AreaLight*>(hit.shape()->light());
-                return std::max(0.f, normal.dot(-ray.direction)) * light->intensity(pos + light->direction(), pos);
             }
 
             const LightList &lights = scene->lightList();
