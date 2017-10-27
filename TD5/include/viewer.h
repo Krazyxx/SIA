@@ -6,6 +6,7 @@
 #include "camera.h"
 #include "mesh.h"
 #include "sphere.h"
+#include "fbo.h"
 
 #include <iostream>
 
@@ -29,11 +30,13 @@ public:
     void keyPressed(int key, int action, int mods);
     void charPressed(int key);
 
+    FBO fbo;
+
 private:
     int _winWidth, _winHeight;
 
     Camera _cam;
-    Shader _blinnPrg, _simplePrg;
+    Shader _blinnPrg, _simplePrg, _gbufferPrg;
 
     // some geometry to render
     std::vector<Shape*> _shapes;

@@ -22,6 +22,7 @@ Viewer::~Viewer()
 void Viewer::init(int w, int h){
     _winWidth = w;
     _winHeight = h;
+    fbo.init(_winWidth, _winHeight);
 
     // Couleur d'arrière plan
     glClearColor(0.0, 0.0, 0.0, 0.0);
@@ -121,6 +122,24 @@ void Viewer::display()
     glUniform3fv(_simplePrg.getUniformLocation("light_col"),1,_lightColor.data());
     _pointLight.display(&_simplePrg);
     _simplePrg.deactivate();
+
+    // Send data to gbuffer
+    fbo.bind();
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    _gbufferPrg.activate();
+    glUniformMatrix4fv(_gbufferPrg.getUniformLocation("projection_matrix"),1,false,_cam.computeProjectionMatrix().data());
+    glUniformMatrix4fv(_gbufferPrg.getUniformLocation("view_matrix"),1,false,_cam.computeViewMatrix().data());
+    for(int i = 0; i < _shapes.size(); ++i) {
+        glUniformMatrix4fv(_gbufferPrg.getUniformLocation("model_matrix"),1,false,_shapes[i]->getTransformationMatrix().data());
+        Matrix3f normal_matrix = (_cam.computeViewMatrix()*_shapes[i]->getTransformationMatrix()).linear().inverse().transpose();
+        glUniformMatrix3fv(_gbufferPrg.getUniformLocation("normal_matrix"), 1, GL_FALSE, normal_matrix.data());
+        glUniform1f(_gbufferPrg.getUniformLocation("specular_coef"),_specularCoef[i]);
+        _shapes[i]->display(&_gbufferPrg);
+    }
+    _gbufferPrg.deactivate();
+    fbo.unbind();
+    fbo.savePNG("color", 0);
+    fbo.savePNG("normal", 1);
 }
 
 
@@ -133,6 +152,7 @@ void Viewer::loadProgram()
 {
     _blinnPrg.loadFromFiles(DATA_DIR"/shaders/blinn.vert", DATA_DIR"/shaders/blinn.frag");
     _simplePrg.loadFromFiles(DATA_DIR"/shaders/simple.vert", DATA_DIR"/shaders/simple.frag");
+    _gbufferPrg.loadFromFiles(DATA_DIR"/shaders/gbuffer.vert", DATA_DIR"/shaders/gbuffer.frag");
     checkError();
 }
 

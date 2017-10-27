@@ -7,30 +7,37 @@ void FBO::init(int width, int height)
     _height = height;
 
     //1. generate a framebuffer object and bind it
-    // TODO
+    glGenFramebuffers(1, &_fboId);
+    glBindFramebuffer(GL_DRAW_FRAMEBUFFER, _fboId);
 
-    //2. init texture
-    glGenTextures(1, &renderedTexture);
+    //2. init textures
+    glGenTextures(2, renderedTexture); // On créer un FBO
+    for (size_t i = 0; i < 2; i++) {
+        // Bind the newly created texture
+        glBindTexture(GL_TEXTURE_2D, renderedTexture[i]);
 
-    // Bind the newly created texture
-    glBindTexture(GL_TEXTURE_2D, renderedTexture);
+        // Give an empty image to OpenGL
+        glTexImage2D(GL_TEXTURE_2D, 0, (GLint)GL_RGB32F, width, height, 0, GL_RGB, GL_FLOAT, 0);
 
-    // Give an empty image to OpenGL
-    glTexImage2D(GL_TEXTURE_2D, 0, (GLint)GL_RGB32F, width, height, 0, GL_RGB, GL_FLOAT, 0);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, (GLint)GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, (GLint)GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D,     GL_TEXTURE_WRAP_S, (GLint)GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_2D,     GL_TEXTURE_WRAP_T, (GLint)GL_CLAMP_TO_EDGE);
 
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, (GLint)GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, (GLint)GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, (GLint)GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, (GLint)GL_CLAMP_TO_EDGE);
-
-    //3. attach the texture to FBO color attachment point
-    // TODO
+        //3. attach the texture to FBO color attachment point
+        glFramebufferTexture2D(GL_DRAW_FRAMEBUFFER, GL_COLOR_ATTACHMENT0+i, GL_TEXTURE_2D, renderedTexture[i], 0);
+    }
 
     //4. init a depth buffer as a texture (in order to use it inside shaders afterward)
-    // TODO - similar to step 2 with a depth specific texture
+    // Similar to step 2 with a depth specific texture
+    //glGenTextures(1, &depthTexture);
+    //glBindTexture(GL_TEXTURE_2D, depthTexture);
 
     //5. attach the depth buffer to FBO depth attachment point
-    // TODO
+    glGenRenderbuffers(1, &depthTexture);
+    glBindTexture(GL_RENDERBUFFER, depthTexture);
+    glRenderbufferStorage(GL_RENDERBUFFER, GL_RENDERBUFFER_INTERNAL_FORMAT, _width, _height);
+    glFramebufferRenderbuffer(GL_DRAW_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, depthTexture);
 
     //6. Set the list of draw buffers.
     GLenum DrawBuffers[1] = { GL_COLOR_ATTACHMENT0 };
@@ -54,9 +61,10 @@ void FBO::unbind()
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
-void FBO::savePNG(const std::string &name)
+// id allows to select the render (color or normal)
+void FBO::savePNG(const std::string &name, int id)
 {
-    glBindTexture(GL_TEXTURE_2D, renderedTexture);
+    glBindTexture(GL_TEXTURE_2D, renderedTexture[id]);
     GLubyte *data = new GLubyte [4 * _width * _height];
     glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
     unsigned char* raw_data = reinterpret_cast<unsigned char*>(data);
