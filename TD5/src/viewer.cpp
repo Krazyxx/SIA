@@ -134,10 +134,12 @@ void Viewer::display()
         Matrix3f normal_matrix = (_cam.computeViewMatrix()*_shapes[i]->getTransformationMatrix()).linear().inverse().transpose();
         glUniformMatrix3fv(_gbufferPrg.getUniformLocation("normal_matrix"), 1, GL_FALSE, normal_matrix.data());
         glUniform1f(_gbufferPrg.getUniformLocation("specular_coef"),_specularCoef[i]);
+
         _shapes[i]->display(&_gbufferPrg);
     }
     _gbufferPrg.deactivate();
     fbo.unbind();
+
     fbo.savePNG("color", 0);
     fbo.savePNG("normal", 1);
 }

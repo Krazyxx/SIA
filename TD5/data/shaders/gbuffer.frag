@@ -1,4 +1,4 @@
-#version 410 core
+#version 330 core
 
 uniform float specular_coef;
 
@@ -11,5 +11,6 @@ layout(location = 1) out vec4 out_normal;
 void main()
 {
     out_color = vec4(vert_color, specular_coef);
-    out_normal = vec4((vert_normal_view + 1.) / 2., gl_FragCoord.z);
+    out_normal = vec4((vert_normal_view + 1.0) / 2.0, gl_FragCoord.z);
+
 }

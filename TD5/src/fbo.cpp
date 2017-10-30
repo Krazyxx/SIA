@@ -11,8 +11,9 @@ void FBO::init(int width, int height)
     glBindFramebuffer(GL_DRAW_FRAMEBUFFER, _fboId);
 
     //2. init textures
-    glGenTextures(2, renderedTexture); // On créer un FBO
-    for (size_t i = 0; i < 2; i++) {
+    unsigned int nbTexture = 2;
+    glGenTextures(nbTexture, renderedTexture); // On créer un FBO
+    for (size_t i = 0; i < nbTexture; i++) {
         // Bind the newly created texture
         glBindTexture(GL_TEXTURE_2D, renderedTexture[i]);
 
@@ -30,18 +31,19 @@ void FBO::init(int width, int height)
 
     //4. init a depth buffer as a texture (in order to use it inside shaders afterward)
     // Similar to step 2 with a depth specific texture
-    //glGenTextures(1, &depthTexture);
-    //glBindTexture(GL_TEXTURE_2D, depthTexture);
+    glGenRenderbuffers(1, &depthTexture);
+    glBindRenderbuffer(GL_RENDERBUFFER, depthTexture);
+    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT32F, _width, _height);
 
     //5. attach the depth buffer to FBO depth attachment point
-    glGenRenderbuffers(1, &depthTexture);
-    glBindTexture(GL_RENDERBUFFER, depthTexture);
-    glRenderbufferStorage(GL_RENDERBUFFER, GL_RENDERBUFFER_INTERNAL_FORMAT, _width, _height);
     glFramebufferRenderbuffer(GL_DRAW_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, depthTexture);
 
     //6. Set the list of draw buffers.
-    GLenum DrawBuffers[1] = { GL_COLOR_ATTACHMENT0 };
-    glDrawBuffers(1, DrawBuffers); // "1" is the size of DrawBuffers
+    GLenum DrawBuffers[nbTexture];
+    for (int i = 0; i < nbTexture; i++) {
+       DrawBuffers[i] = GL_COLOR_ATTACHMENT0+i;
+    }
+    glDrawBuffers(nbTexture, DrawBuffers);
 
     //7. check FBO status
     checkFBOAttachment();

@@ -1,4 +1,4 @@
-#version 410 core
+#version 330 core
 
 uniform mat4 projection_matrix;
 uniform mat4 model_matrix;
@@ -14,7 +14,7 @@ out vec3 vert_color;
 
 void main()
 {
-    gl_Position = projection_matrix * view_matrix * model_matrix * vec4(vtx_position, 1.);
+    gl_Position = projection_matrix * view_matrix * model_matrix * vec4(vtx_position, 1.0);
     vert_normal_view = normalize(normal_matrix * vtx_normal);
     vert_color = vtx_color;
 }
