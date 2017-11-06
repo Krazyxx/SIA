@@ -1,7 +1,13 @@
 #version 330 core
 
-uniform vec4 light_pos;
-uniform vec3 light_col;
+uniform vec3 light_col1;
+uniform vec3 light_col2;
+uniform vec3 light_col3;
+
+uniform vec4 light_pos1;
+uniform vec4 light_pos2;
+uniform vec4 light_pos3;
+
 uniform float specular_coef;
 
 in vec4 vert_pos_view;
@@ -31,10 +37,18 @@ vec3 shade(vec3 N, vec3 L, vec3 V,
 
 void main(void)
 {
-    vec3 l = vec3(light_pos - vert_pos_view);
-    
+    vec3 l = vec3(light_pos1 - vert_pos_view);
     out_color.rgb = shade(normalize(vert_normal_view), normalize(l), -normalize(vert_pos_view.xyz),
-                          vert_color, 0.2, 0.7, specular_coef, light_col/max(1,dot(l,l)*0.05), 5);
+                          vert_color, 0.2, 0.7, specular_coef, light_col1/max(1,dot(l,l)*0.05), 5);
+    l = vec3(light_pos2 - vert_pos_view);
+    out_color.rgb += shade(normalize(vert_normal_view), normalize(l), -normalize(vert_pos_view.xyz),
+                           vert_color, 0.2, 0.7, specular_coef, light_col2/max(1,dot(l,l)*0.05), 5);
+
+    l = vec3(light_pos3 - vert_pos_view);
+    out_color.rgb += shade(normalize(vert_normal_view), normalize(l), -normalize(vert_pos_view.xyz),
+                           vert_color, 0.2, 0.7, specular_coef, light_col3/max(1,dot(l,l)*0.05), 5);
+
+    out_color.rgb /= 3;
 
     out_color.a = 1.0;
 }

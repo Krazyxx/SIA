@@ -23,6 +23,8 @@
 #include "areaLight.h"
 #include <memory>
 
+using namespace std;
+
 class PhotonMapper : public Integrator
 {
 public:
@@ -57,63 +59,54 @@ public:
 
         /* Trace photons */
         m_nPaths = 0;
-        while(m_photonMap->size() < m_photonCount) {
+        while(m_photonMap->size() < (unsigned int) m_photonCount) {
             m_nPaths++;
             Photon photon1 = scene->samplePhoton();
 
-            float random, russkayaRuletka;
             do {
                 Ray ray(photon1.getPosition(), photon1.getDirection());
                 Hit hit;
                 scene->intersect(ray, hit);
                 if (!hit.foundIntersection()) { break; }
 
-                Point3f pos2 = ray.at(hit.t());
+                Color3f power2 = photon1.getPower();
                 const Material* material = hit.shape()->material();
-                float pdf;
-                Vector3f dir2 = material->is(hit.normal(), -ray.direction, pdf);
-                Color3f premultBrdf = material->premultBrdf(-ray.direction, dir2, hit.normal(), hit.texcoord());
-                Color3f power2 = photon1.getPower() * premultBrdf;
-
-                /* TODO
-                // reflexions
-                if((material->reflectivity() > 1e-6).any()) {
-                    Vector3f r = (ray.direction - 2.*ray.direction.dot(hit.normal())*hit.normal()).normalized();
-                    Ray reflexion_ray(pos + hit.normal()*Epsilon, r);
-                    reflexion_ray.recursionLevel = ray.recursionLevel + 1;
-                    float cos_term = std::max(0.f,r.dot(normal));
-                    power2 += material->reflectivity() * Li(scene, reflexion_ray) * cos_term;
-                }
-
-                // refraction
-                if((material->transmissivness() > 1e-6).any())
-                {
+                Normal3f normal = hit.normal();
+                Vector3f dir2;
+                if((material->reflectivity() > 1e-6).any()) { // reflexions
+                    dir2 = (ray.direction - 2.*ray.direction.dot(hit.normal())*hit.normal()).normalized();
+                    float cos_term = std::max(0.f,dir2.dot(normal));
+                    power2 *= material->reflectivity() * cos_term;
+                } else if((material->transmissivness() > 1e-6).any()) { // refraction
                     float etaA = material->etaA(), etaB = material->etaB();
                     bool entering = -normal.dot(ray.direction) > 0;
                     if(!entering) {
                         std::swap(etaA,etaB);
                         normal = -normal;
                     }
-                    Vector3f r;
-                    if(refract(normal,ray.direction,etaA,etaB,r)) {
-                        Ray refraction_ray(pos - normal*Epsilon, r);
-                        refraction_ray.recursionLevel = ray.recursionLevel + 1;
-                        float cos_term = std::max(0.f,-r.dot(normal));
-                        power2 += material->transmissivness() * Li(scene, refraction_ray) * cos_term;
+                    if(refract(normal,ray.direction,etaA,etaB,dir2)) {
+                        float cos_term = std::max(0.f,-dir2.dot(normal));
+                        power2 *= material->transmissivness() * cos_term;
                     }
+                } else {
+                    float pdf;
+                    dir2 = material->is(hit.normal(), -ray.direction, pdf);
+                    power2 *= material->premultBrdf(-ray.direction, dir2, hit.normal(), hit.texcoord());
                 }
-                */
 
+                Point3f pos2 = ray.at(hit.t());
                 if (!dynamic_cast<const Phong*>(material) &&
                     !dynamic_cast<const Ward*>(material)) {
-                    Photon photon2(pos2, -ray.direction, power2);
+                    Photon photon2(pos2, -ray.direction, photon1.getPower());
                     m_photonMap->push_back(photon2);
                 }
 
-                russkayaRuletka = power2.mean() / photon1.getPower().mean();
-                photon1 = Photon(pos2, dir2, power2);
-                random = Eigen::internal::random<float>(0,1);
-            } while(m_photonMap->size() < m_photonCount && photon1.getPower().mean() > Epsilon && random < russkayaRuletka);
+                float ratio = power2.mean() / photon1.getPower().mean();
+                float russkayaRuletka = Eigen::internal::random<float>(0,1);
+                if (ratio < Epsilon || ratio < russkayaRuletka) { break; }
+
+                photon1 = Photon(pos2, dir2, power2 * ratio);
+            } while(m_photonMap->size() < (unsigned int) m_photonCount && photon1.getPower().mean() > Epsilon);
         }
 
         /* Build the photon map */

@@ -12,4 +12,5 @@ void main()
 {
     out_color = vec4(vert_color, specular_coef);
     out_normal = vec4((vert_normal_view + 1.0) / 2.0, gl_FragCoord.z);
+
 }

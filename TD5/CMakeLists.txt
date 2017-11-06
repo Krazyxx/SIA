@@ -62,8 +62,10 @@ set(SRC_FILES
     src/fbo.cpp
 )
 
+file(GLOB DATA data/*/* data/*.png)
+
 add_definitions(-DDATA_DIR="${PROJECT_SOURCE_DIR}/data")
 
-add_executable(sia_td5 ${SRC_FILES})
+add_executable(sia_td5 ${SRC_FILES} ${DATA})
 
 target_link_libraries(sia_td5 glfw ${GLFW_LIBRARIES} glbinding SOIL)
