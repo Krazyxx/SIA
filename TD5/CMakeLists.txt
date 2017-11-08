@@ -21,9 +21,9 @@ if (CMAKE_CXX_COMPILER_ID MATCHES "Clang" OR CMAKE_CXX_COMPILER_ID MATCHES "GNU"
   CHECK_CXX_COMPILER_FLAG("-std=c++11" HAS_CPP11_FLAG)
 
   if (HAS_CPP14_FLAG)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14 -w")
   elseif (HAS_CPP11_FLAG)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -w")
   else()
     message(FATAL_ERROR "Unsupported compiler -- requires C++11 support!")
   endif()
@@ -62,10 +62,8 @@ set(SRC_FILES
     src/fbo.cpp
 )
 
-file(GLOB DATA data/*/* data/*.png)
-
 add_definitions(-DDATA_DIR="${PROJECT_SOURCE_DIR}/data")
 
-add_executable(sia_td5 ${SRC_FILES} ${DATA})
+add_executable(sia_td5 ${SRC_FILES})
 
 target_link_libraries(sia_td5 glfw ${GLFW_LIBRARIES} glbinding SOIL)
