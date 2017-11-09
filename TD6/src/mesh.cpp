@@ -162,10 +162,10 @@ void Mesh::display(Shader *shader)
 }
 
 // Builds the quad
-// p0 ---- p1
-// |     / |
-// |  /    |
-// p2 ---- p3
+// p0 --- p1
+// |    / |
+// |  /   |
+// p2 --- p3
 
 void Mesh::addQuad(Mesh* mesh, const Vector4f &p0, const Vector4f &p1, const Vector4f &p2, const Vector4f &p3)
 {
@@ -184,6 +184,46 @@ void Mesh::addQuad(Mesh* mesh, const Vector4f &p0, const Vector4f &p1, const Vec
 
 Mesh* Mesh::computeShadowVolume(const Vector3f &lightPos)
 {
+    Vector3f L = (_transformation.inverse() * Vector4f(lightPos[0], lightPos[1], lightPos[2], 1)).head(3);
+    Mesh *mesh = new Mesh();
 
-    /* TODO */
+    Surface_mesh::Vertex_property<Point> vertices = _halfEdgeMesh.get_vertex_property<Point>("v:point");
+    Surface_mesh::Face_property<Point> normals = _halfEdgeMesh.get_face_property<Point>("f:normal");
+
+    Surface_mesh::Edge_iterator eit;
+    for(eit = _halfEdgeMesh.edges_begin(); eit != _halfEdgeMesh.edges_end(); ++eit) {
+        const Surface_mesh::Face face0 = _halfEdgeMesh.face(*eit, 0);
+        const Surface_mesh::Face face1 = _halfEdgeMesh.face(*eit, 1);
+
+        const Surface_mesh::Vertex v = _halfEdgeMesh.vertex(*eit, 0);
+        Vector3f p = Vector3f(vertices[v][0], vertices[v][1], vertices[v][2]);
+
+        Vector3f n0 = Vector3f(normals[face0][0], normals[face0][1], normals[face0][2]);
+        Vector3f n1 = Vector3f(normals[face1][0], normals[face1][1], normals[face1][2]);
+
+        float dist0 = (L - p).dot(n0);
+        float dist1 = (L - p).dot(n1);
+
+        // We check if the edge is adjacent to a lighted face and a face in the shadow
+        if (dist0 < 0 && dist1 > 0 || dist1 < 0 && dist0 > 0) {
+            Surface_mesh::Vertex v0, v1;
+            // We manage the culling
+            if (dist0 < 0 && dist1 > 0) {
+                v0 = _halfEdgeMesh.vertex(*eit, 0);
+                v1 = _halfEdgeMesh.vertex(*eit, 1);
+            } else {
+                v0 = _halfEdgeMesh.vertex(*eit, 1);
+                v1 = _halfEdgeMesh.vertex(*eit, 0);
+            }
+
+            Vector4f p0 = Vector4f(vertices[v0][0], vertices[v0][1], vertices[v0][2], 1);
+            Vector4f p1 = Vector4f(vertices[v1][0], vertices[v1][1], vertices[v1][2], 1);
+            Vector4f p2 = Vector4f(vertices[v0][0] - L[0], vertices[v0][1] - L[1], vertices[v0][2] - L[2], 0);
+            Vector4f p3 = Vector4f(vertices[v1][0] - L[0], vertices[v1][1] - L[1], vertices[v1][2] - L[2], 0);
+
+            mesh->addQuad(mesh, p0, p1, p2, p3);
+        }
+    }
+
+    return mesh;
 }

@@ -38,6 +38,7 @@ private:
 
     // some geometry to render
     std::vector<Shape*> _shapes;
+    std::vector<Shape*> _shadowShapes;
     std::vector<float> _specularCoef;
 
     // geometrical representation of a pointlight
