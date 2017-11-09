@@ -1,0 +1,211 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>SIA - Gouraud Jimmy</title>
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/github-gist.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+    <script>hljs.initHighlightingOnLoad();</script>
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+    <script src="../js/toc.min.js"></script>
+
+    <script type="text/javascript" async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+	MathJax.Hub.Config({
+	tex2jax: {
+        inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+        displayMath: [ ['$$','$$'], ["\\[","\\]"] ],
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre']
+	}
+	});
+	MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax(), i;
+        for(i=0; i < all.length; i += 1) {
+		     all[i].SourceElement().parentNode.className += ' has-jax';
+		     }
+		     });
+    </script>
+
+    <link rel="stylesheet" href="../css/style.css">
+
+  </head>
+
+  <body>
+
+    <div id="toc"></div>
+
+    <div id="content">
+
+      <h1 style="text-align:center">TD6 - Shadow Volumes</h1>
+      Objectif : Mise en oeuvre de la technique des <i>shadow</i> volumes pour calculer
+      les ombres portées d'un maillage éclairé par une source ponctuelle.
+
+      <h2>1. Construction des volumes d'ombres</h2>
+      On devait d'abord implémenter la fonction <code class="inline-code">Mesh::computeShadowVolume</code>
+      qui prend en paramètre la position de la source lumineuse et retourne un nouveau maillage correspondat
+      au volume d'ombre. <br />
+      Il fallait de plus :
+      <ul>
+          <li>
+              Effectuer une transformation inverse à la position de la lumière afin de transformer dans le repère de l'objet
+          </li>
+          <li>
+              Vérifier que les quads créé était bien orienté (à l'aide du <i>culling</i>)
+          </li>
+      </ul>
+      <div class="highlight">
+          <pre><code class="cpp hlsl">Mesh* Mesh::computeShadowVolume(const Vector3f &lightPos)
+{
+    Vector3f L = (_transformation.inverse() * Vector4f(lightPos[0], lightPos[1], lightPos[2], 1)).head(3);
+    Mesh *mesh = new Mesh();
+
+    Surface_mesh::Vertex_property<Point> vertices = _halfEdgeMesh.get_vertex_property<Point>("v:point");
+    Surface_mesh::Face_property<Point> normals = _halfEdgeMesh.get_face_property<Point>("f:normal");
+
+    Surface_mesh::Edge_iterator eit;
+    for(eit = _halfEdgeMesh.edges_begin(); eit != _halfEdgeMesh.edges_end(); ++eit) {
+        const Surface_mesh::Face face0 = _halfEdgeMesh.face(*eit, 0);
+        const Surface_mesh::Face face1 = _halfEdgeMesh.face(*eit, 1);
+
+        const Surface_mesh::Vertex v = _halfEdgeMesh.vertex(*eit, 0);
+        Vector3f p = Vector3f(vertices[v][0], vertices[v][1], vertices[v][2]);
+
+        Vector3f n0 = Vector3f(normals[face0][0], normals[face0][1], normals[face0][2]);
+        Vector3f n1 = Vector3f(normals[face1][0], normals[face1][1], normals[face1][2]);
+
+        float dist0 = (L - p).dot(n0);
+        float dist1 = (L - p).dot(n1);
+
+        // We check if the edge is adjacent to a lighted face and a face in the shadow
+        if (dist0 < 0 && dist1 > 0 || dist1 < 0 && dist0 > 0) {
+            Surface_mesh::Vertex v0, v1;
+            // We manage the culling
+            if (dist0 < 0 && dist1 > 0) {
+                v0 = _halfEdgeMesh.vertex(*eit, 0);
+                v1 = _halfEdgeMesh.vertex(*eit, 1);
+            } else {
+                v0 = _halfEdgeMesh.vertex(*eit, 1);
+                v1 = _halfEdgeMesh.vertex(*eit, 0);
+            }
+
+            Vector4f p0 = Vector4f(vertices[v0][0], vertices[v0][1], vertices[v0][2], 1);
+            Vector4f p1 = Vector4f(vertices[v1][0], vertices[v1][1], vertices[v1][2], 1);
+            Vector4f p2 = Vector4f(vertices[v0][0] - L[0], vertices[v0][1] - L[1], vertices[v0][2] - L[2], 0);
+            Vector4f p3 = Vector4f(vertices[v1][0] - L[0], vertices[v1][1] - L[1], vertices[v1][2] - L[2], 0);
+
+            mesh->addQuad(mesh, p0, p1, p2, p3);
+        }
+    }
+
+    return mesh;
+}</code></pre>
+      </div>
+
+      Ensuite, pour voir nos modifications, il fallait créer le mesh de l'ombrage dans la fonction
+      <code class="inline-code">Mesh::computeShadowVolume</code> :
+      <div class="highlight">
+          <pre><code class="cpp hlsl">void Viewer::init(int w, int h){
+    // ...
+
+    // Shadow Mesh
+    Vector4f lightPos = (_pointLight.getTransformationMatrix() * Vector4f(0,0,0,1));
+    Mesh* shadowMesh = mesh->computeShadowVolume(lightPos.head(3));
+    shadowMesh->setTransformationMatrix(Translation3f(0,0,2.f) * Scaling(0.5f) );
+    _shadowShapes.push_back(shadowMesh);
+}</code></pre>
+       </div>
+       Nous avons pour cela rajouter un _shadowShapes dans la classe  <code class="inline-code">Viewer</code>
+       <div class="highlight">
+           <pre><code class="cpp hlsl">class Viewer{
+        // ...
+    private:
+        // ...
+        std::vector<Shape*> _shadowShapes;
+};</code></pre>
+        </div>
+
+        Et nous avons dessiner notre maillage à l'aide du shader <code class="inline-code">_simplePrg</code>.
+        <div class="highlight">
+            <pre><code class="cpp hlsl">void Viewer::display()
+{
+    // ...
+
+    _simplePrg.activate();
+    // ... Draw light source ...
+
+    // Draw shadowMesh
+    glEnable(GL_CULL_FACE);
+    glCullFace(GL_FRONT);
+    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE); // GL_LINE -> wireframe, GL_FILL -> standard
+    for(uint i=0; i<_shadowShapes.size(); ++i) {
+        glUniformMatrix4fv(_simplePrg.getUniformLocation("model_matrix"), 1, GL_FALSE, _shadowShapes[i]->getTransformationMatrix().data());
+        _shadowShapes[i]->display(&_blinnPrg);
+    }
+    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    glDisable(GL_CULL_FACE);
+
+    _simplePrg.deactivate();
+}</code></pre>
+        </div>
+
+
+        <figure>
+            <center>
+                <table>
+                    <tbody>
+                        <tr>
+                            <td>
+                                <img src="images/1. GL_BACK.png" width="300"/>
+                                <figcaption>GL_BACK</figcaption>
+                            </td>
+                            <td>
+                                <img src="images/1. GL_FRONT.png" width="300"/>
+                                <figcaption>GL_Front</figcaption>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <img src="images/1. sphere.png" width="300"/>
+                                <figcaption>Sphere</figcaption>
+                            </td>
+                            <td>
+                                <img src="images/1. tw.png" width="300"/>
+                                <figcaption>Tw</figcaption>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </center>
+        </figure>
+
+      <h2>2. Comptage des entrées et sorties</h2>
+
+
+
+
+
+
+
+    <script type="text/javascript">
+      $('#toc').toc({
+      'selectors': 'h2,h3,h4', //elements to use as headings
+      'container': 'body', //element to find all selectors in
+      'smoothScrolling': true, //enable or disable smooth scrolling on click
+      'prefix': 'toc', //prefix for anchor tags and class names
+      'onHighlight': function(el) {}, //called when a new section is highlighted
+      'highlightOnScroll': true, //add class to heading that is currently in focus
+      'highlightOffset': 100, //offset to trigger the next headline
+      'anchorName': function(i, heading, prefix) { //custom function for anchor name
+      return prefix+i;
+      },
+      'headerText': function(i, heading, $heading) { //custom function building the header-item text
+      return $heading.text();
+      },
+      'itemClass': function(i, heading, $heading, prefix) { // custom function for item class
+      return $heading[0].tagName.toLowerCase();
+      }
+      });
+    </script>
+
+  </body>

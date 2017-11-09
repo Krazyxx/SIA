@@ -17,9 +17,14 @@ body {
 	padding: 5px;
 }
 
+.inline-code {
+    color: #4A6;
+}
+
 pre, code, tt {
-	margin: 0;	
+	margin: 0;
 	font-family: Monaco
+	color: #4A6;
 }
 
 figure {

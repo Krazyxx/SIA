@@ -106,17 +106,18 @@ void Viewer::display()
 
     _blinnPrg.deactivate();
 
-    // Draw light source
     _simplePrg.activate();
+    // Draw light source
     glUniformMatrix4fv(_simplePrg.getUniformLocation("projection_matrix"), 1, GL_FALSE, _cam.computeProjectionMatrix().data());
     glUniformMatrix4fv(_simplePrg.getUniformLocation("view_matrix"), 1, GL_FALSE, _cam.computeViewMatrix().data());
     glUniformMatrix4fv(_simplePrg.getUniformLocation("model_matrix"), 1, GL_FALSE, _pointLight.getTransformationMatrix().data());
     glUniform3fv(_simplePrg.getUniformLocation("light_col"), 1, _lightColor.data());
     _pointLight.display(&_simplePrg);
 
+    // Draw shadowMesh
     glEnable(GL_CULL_FACE);
     glCullFace(GL_FRONT);
-    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE); // GL_LINE -> wireframe, GL_FILL -> standard
     for(uint i=0; i<_shadowShapes.size(); ++i) {
         glUniformMatrix4fv(_simplePrg.getUniformLocation("model_matrix"), 1, GL_FALSE, _shadowShapes[i]->getTransformationMatrix().data());
         _shadowShapes[i]->display(&_blinnPrg);
