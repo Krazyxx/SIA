@@ -58,10 +58,10 @@ int create_permutation(const Surface_mesh& mesh, Permutation& perm)
         Surface_mesh::Vertex vi = *vit;
         if (masks[vi] == 1) {
             perm.indices()[vi.idx()] = nb_unknowns;
-            ++nb_unknowns;
+            nb_unknowns++;
         } else {
             perm.indices()[vi.idx()] = nb_knowns;
-            --nb_knowns;
+            nb_knowns--;
         }
     }
 
@@ -89,40 +89,21 @@ void poly_harmonic_interpolation(const Surface_mesh& mesh, Ref<MatrixXf> u, int 
 
     // 3 - Apply the permutation to both rows (equations) and columns (unknowns),
     //     i.e., L = P * L * P^-1
+    // multiplication à gauche par P : modification des colonnes
+    //                  droite       : modification des lignes
     L = L.twistedBy(perm); // Equivalent to L = perm * L * perm.inverse() but faster
-    auto u_prime = perm * u.transpose();
+
+    // 4 - solve L * [x^T u^T]^T = 0, i.e., L00 x = - L01 * u
+    MatrixXf u_prime = perm * u.transpose();
 
     SpMat L00 = L.topLeftCorner(nb_unknowns, nb_unknowns);
     SpMat L01 = L.topRightCorner(nb_unknowns, n - nb_unknowns);
 
-    // 4 - solve L * [x^T u^T]^T = 0, i.e., L00 x = - L01 * u
+    SimplicialLDLT<SpMat> solver;
+    solver.compute(L00);
+    u_prime.topRows(nb_unknowns) = solver.solve(- L01 * u_prime.bottomRows(n - nb_unknowns));
 
-    L_unknowns = L.topRows(nb_unknowns); // extract the unknows
-
-    SolverClassName<SpMat> solver;
-    solver.compute(L_unknowns);
-    if (solver.info() != Success) {
-        // decomposition failed;
-        return;
-    }
-/*
-    VectorXd
-    solver.solve();
-*/
     // 5 - Copy back the results to u
-
-    // TODO
-
+    u_prime  = perm.inverse() * u_prime;
+    u = u_prime.transpose();
 }
-
-
-
-
-
-
-
-
-
-
-
-
