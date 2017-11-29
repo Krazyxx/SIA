@@ -14,9 +14,25 @@ double cotan_weight(const Surface_mesh& mesh, Surface_mesh::Halfedge he)
 {
     auto points = mesh.get_vertex_property<Point>("v:point");
 
-    // TODO
+    Surface_mesh::Vertex pi  = mesh.from_vertex(he);                          // p(i)
+    Surface_mesh::Vertex pi1 = mesh.to_vertex(mesh.ccw_rotated_halfedge(he)); // p(j-1)
+    Surface_mesh::Vertex pj  = mesh.to_vertex(he);                            // p(j)
+    Surface_mesh::Vertex pj1 = mesh.to_vertex(mesh.cw_rotated_halfedge(he));  // p(j+1)
 
-    return 1;
+    Vector3f vi1_i = (points[pi] - points[pi1]).normalized();
+    Vector3f vi1_j = (points[pj] - points[pi1]).normalized();
+    Vector3f vj1_i = (points[pi] - points[pj1]).normalized();
+    Vector3f vj1_j = (points[pj] - points[pj1]).normalized();
+
+    float cos_alpha = vi1_j.dot(vi1_j);
+    float sin_alpha = vi1_j.dot(vi1_j);
+    float cos_beta  = vi1_j.dot(vi1_j);
+    float sin_beta  = vi1_j.dot(vi1_j);
+
+    float cotan_alpha = cos_alpha / sin_alpha;
+    float cotan_beta = cos_beta / sin_beta;
+
+    return (cotan_alpha + cotan_beta) / 2.f;
 }
 
 /// Computes the Laplacian matrix in matrix \a L using cotangent weights or the graph Laplacian if useCotWeights==false.
@@ -29,13 +45,18 @@ void create_laplacian_matrix(const Surface_mesh& mesh, SpMat& L, bool useCotWeig
 
     Surface_mesh::Vertex_iterator vit;
     for (vit = mesh.vertices_begin(); vit != mesh.vertices_end(); ++vit) {
-        float wii = 0;
+        // halfedge circulator
+        float wii = 0.f;
         Surface_mesh::Vertex vi = *vit;
-        for (auto vj : mesh.vertices(vi)) {
-            float wij = 1; // need to compute the weight
-            tripletList.push_back(T(vi.idx(), vj.idx(), wij));
+
+        Surface_mesh::Vertex_around_vertex_circulator vj, vj_end;
+        vj = mesh.vertices(*vit);
+        vj_end = vj;
+        do {
+            float wij = useCotWeights ? cotan_weight(mesh, vj.halfedge()) : 1.0; // need to compute the weight
+            tripletList.push_back(T(vi.idx(), (*vj).idx(), wij));
             wii += wij;
-        }
+        } while(++vj != vj_end);
         tripletList.push_back(T(vi.idx(), vi.idx(), -wii));
     }
 
@@ -80,7 +101,11 @@ void poly_harmonic_interpolation(const Surface_mesh& mesh, Ref<MatrixXf> u, int 
 
     // 1 - Create the sparse Laplacian matrix
     SpMat L(n,n);
-    create_laplacian_matrix(mesh, L, false);
+    create_laplacian_matrix(mesh, L, true);
+    SpMat Ltmp = SpMat(L);
+    for (int i = 1; i < k; ++i) {
+        L = L * Ltmp;
+    }
 
     // 2 - Create the permutation matrix putting the fixed values at the end,
     //     and the true unknown at the beginning
@@ -93,11 +118,12 @@ void poly_harmonic_interpolation(const Surface_mesh& mesh, Ref<MatrixXf> u, int 
     //                  droite       : modification des lignes
     L = L.twistedBy(perm); // Equivalent to L = perm * L * perm.inverse() but faster
 
+    SpMat L00 = L.topLeftCorner(nb_unknowns, nb_unknowns);
+    SpMat L01 = L.topRightCorner(nb_unknowns, n - nb_unknowns);
+
     // 4 - solve L * [x^T u^T]^T = 0, i.e., L00 x = - L01 * u
     MatrixXf u_prime = perm * u.transpose();
 
-    SpMat L00 = L.topLeftCorner(nb_unknowns, nb_unknowns);
-    SpMat L01 = L.topRightCorner(nb_unknowns, n - nb_unknowns);
 
     SimplicialLDLT<SpMat> solver;
     solver.compute(L00);
