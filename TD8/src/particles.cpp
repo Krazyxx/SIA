@@ -106,19 +106,34 @@ void ParticleSystem::step(double dt) {
 }
 
 int ParticleSystem::getDimensions() {
-     // TODO: implement this
+    return 6 * this->particles.size();
 }
 
 void ParticleSystem::getState (VectorXd &state) {
-    // TODO: implement this
+    int offset = 0;
+    for (Particle* particle : this->particles) {
+        state.segment(offset, offset+2)   = particle->x;
+        state.segment(offset+3, offset+5) = particle->v;
+        offset += 6;
+    }
 }
 
 void ParticleSystem::setState (const VectorXd &state) {
-    // TODO: implement this
+    int offset = 0;
+    for (Particle* particle : this->particles) {
+        particle->x = state.segment(offset, offset+2);
+        particle->v = state.segment(offset+3, offset+5);
+        offset += 6;
+    }
 }
 
 void ParticleSystem::getDerivative (VectorXd &deriv) {
-    // TODO: implement this
+    int offset = 0;
+    for (Particle* particle : this->particles) {
+        deriv.segment(offset,   offset+2) = particle->v;
+        deriv.segment(offset+3, offset+5) = particle->f / particle->m;
+        offset += 6;
+    }
 }
 
 void GravityForce::addForces() {
