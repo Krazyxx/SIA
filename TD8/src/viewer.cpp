@@ -76,7 +76,7 @@ void Viewer::updateScene()
     // Measure speed
     double currentTime = glfwGetTime();
     while(glfwGetTime() - currentTime < 0.03) {
-        _psys.step(0.0001);
+        _psys.step(0.00001);
     }
 
     display();

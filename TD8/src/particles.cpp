@@ -102,7 +102,8 @@ void ParticleSystem::display(Shader *shader) {
 }
 
 void ParticleSystem::step(double dt) {
-    // TODO: implement this
+    explicitEulerStep(this, dt);
+    updateGL(false);
 }
 
 int ParticleSystem::getDimensions() {
@@ -112,8 +113,8 @@ int ParticleSystem::getDimensions() {
 void ParticleSystem::getState (VectorXd &state) {
     int offset = 0;
     for (Particle* particle : this->particles) {
-        state.segment(offset, offset+2)   = particle->x;
-        state.segment(offset+3, offset+5) = particle->v;
+        state.segment(offset, 3)   = particle->x;
+        state.segment(offset+3, 3) = particle->v;
         offset += 6;
     }
 }
@@ -121,30 +122,38 @@ void ParticleSystem::getState (VectorXd &state) {
 void ParticleSystem::setState (const VectorXd &state) {
     int offset = 0;
     for (Particle* particle : this->particles) {
-        particle->x = state.segment(offset, offset+2);
-        particle->v = state.segment(offset+3, offset+5);
+        particle->x = state.segment(offset, 3);
+        particle->v = state.segment(offset+3, 3);
         offset += 6;
     }
 }
 
 void ParticleSystem::getDerivative (VectorXd &deriv) {
+    for (Particle* particle : this->particles) {
+        particle->f = Vector3d(0,0,0);
+    }
+
+    for (Force* force : this->forces) {
+        force->addForces();
+    }
+
     int offset = 0;
     for (Particle* particle : this->particles) {
-        deriv.segment(offset,   offset+2) = particle->v;
-        deriv.segment(offset+3, offset+5) = particle->f / particle->m;
+        deriv.segment(offset, 3) = particle->v;
+        deriv.segment(offset+3, 3) = particle->f / particle->m;
         offset += 6;
     }
 }
 
 void GravityForce::addForces() {
     for (Particle* particle : this->ps->particles) {
-        particle->f = particle->m  * this->g;
+        particle->f += particle->m  * this->g;
     }
 }
 
 void DragForce::addForces() {
     for (Particle* particle : this->ps->particles) {
-        particle->f = - this->kd * particle->v;
+        particle->f += - this->kd * particle->v;
     }
 }
 
@@ -153,8 +162,9 @@ void SpringForce::addForces() {
     Vector3d f_mass_spring = - ks * (l.norm() - l0) * (l / l.norm());
     Vector3d f_mass_damper = - kd * (p0->v - p1->v).dot(l) / l.norm() * (l / l.norm());
 
-    p0->f =   f_mass_spring + f_mass_damper;
-    p1->f = - f_mass_spring + f_mass_damper;
+    Vector3d f = f_mass_spring + f_mass_damper;
+    p0->f += f;
+    p1->f += - f;
 }
 
 void AnchorForce::addForces() {
