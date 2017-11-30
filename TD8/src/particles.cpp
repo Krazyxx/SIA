@@ -122,15 +122,24 @@ void ParticleSystem::getDerivative (VectorXd &deriv) {
 }
 
 void GravityForce::addForces() {
-    // TODO: implement this
+    for (Particle* particle : this->ps->particles) {
+        particle->f = particle->m  * this->g;
+    }
 }
 
 void DragForce::addForces() {
-    // TODO: implement this
+    for (Particle* particle : this->ps->particles) {
+        particle->f = - this->kd * particle->v;
+    }
 }
 
 void SpringForce::addForces() {
-    // TODO: implement this
+    Vector3d l = p0->x - p1->x;
+    Vector3d f_mass_spring = - ks * (l.norm() - l0) * (l / l.norm());
+    Vector3d f_mass_damper = - kd * (p0->v - p1->v).dot(l) / l.norm() * (l / l.norm());
+
+    p0->f =   f_mass_spring + f_mass_damper;
+    p1->f = - f_mass_spring + f_mass_damper;
 }
 
 void AnchorForce::addForces() {
