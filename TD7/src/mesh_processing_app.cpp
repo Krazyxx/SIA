@@ -23,6 +23,7 @@ void MeshProcessingApp::init(int w, int h, int argc, char **argv)
   std::cout << "**************************************************" << std::endl;
   std::cout << "Selection:" << std::endl;
   std::cout << "  ctrl+left+drag: selection" << std::endl;
+  std::cout << "  p/P:  decrease/increase selected vertex" << std::endl;
   std::cout << "  s:    enable/disable display of selected vertices" << std::endl;
   std::cout << "  c:    clear the selection" << std::endl;
   std::cout << "Mesh processing:" << std::endl;
@@ -110,6 +111,16 @@ void MeshProcessingApp::mousePressed(GLFWwindow *window, int button, int action,
       _pickingMode = false;
     }
   }
+  else if((mods&GLFW_MOD_SHIFT) == GLFW_MOD_SHIFT) {
+      if(selectVertex(_lastMousePos.cast<float>()))
+      {
+          _offsettingMode = true;
+      }
+      else
+      {
+          _offsettingMode = false;
+      }
+  }
   else
     Viewer::mousePressed(window,button,action,mods);
 }
@@ -148,6 +159,20 @@ void MeshProcessingApp::charPressed(int key)
   {
     _pickingRadius /= 1.2;
   }
+  else if(key==GLFW_KEY_P)
+  {
+      if (_offsettingMode) {
+          _mesh->increaseVertex();
+          _mesh->updateVBO();
+      }
+  }
+  else if(key=='p')
+  {
+      if (_offsettingMode) {
+          _mesh->decreaseVertex();
+          _mesh->updateVBO();
+      }
+  }
   else if(key=='c')
   {
     _mesh->masks().setZero();
@@ -158,10 +183,29 @@ void MeshProcessingApp::charPressed(int key)
     int k = key-GLFW_KEY_1+1; // k = 1, 2 ou 3 (harmonique, bi-harmonique, tri-harmonique
     // TODO appeler _mesh->poly_harmonic_interpolation avec l'attribut que l'on souhaite reconstruire/interpoler,
     //      et mettre à jour le maillage en fonction de ce qui a été modifié
+    auto mask = _mesh->get_vertex_property<int>("v:mask");
+    mask[_mesh->getSelectedVertex()] = 0;
     poly_harmonic_interpolation(*_mesh, _mesh->positions(), k);
 //     poly_harmonic_interpolation(*_mesh,_mesh->colors(), k);
     _mesh->updateAll();
   }
   else
     Viewer::charPressed(key);
+}
+
+
+bool MeshProcessingApp::selectVertex(const Vector2f &p) const {
+    Hit hit;
+    if(pickAt(p, hit)) {
+        int clostest_id = 0;
+        hit.baryCoords().maxCoeff(&clostest_id);
+        Surface_mesh::Vertex closest_v(_mesh->faceIndices()(clostest_id, hit.faceId()));
+        auto mask = _mesh->get_vertex_property<int>("v:mask");
+        if (mask[closest_v] == 1) {
+            // The vertice is selected
+            _mesh->setSelectedVertex(closest_v);
+            return true;
+        }
+        return false;
+    }
 }

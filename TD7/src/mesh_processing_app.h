@@ -22,13 +22,14 @@ protected:
 
   bool pickAt(const Eigen::Vector2f &p, Hit &hit) const;
   bool selectAround(const Eigen::Vector2f &p) const;
+  bool selectVertex(const Eigen::Vector2f &p) const;
 
   // main mesh to work on:
   Mesh* _mesh;
 
   float _pickingRadius = 0.1;
   bool _pickingMode = false;
-
+  bool _offsettingMode = false;
 };
 
 #endif // MESH_PROCESSING_APP_H

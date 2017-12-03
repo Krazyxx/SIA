@@ -97,8 +97,25 @@ public:
 
     const Eigen::AlignedBox3f& boundingBox() const { return _bbox; }
 
+    void setSelectedVertex(Surface_mesh::Vertex vertex) { _selectedVertex = vertex; }
+    Surface_mesh::Vertex getSelectedVertex() { return _selectedVertex; }
+
+    void increaseVertex()
+    {
+        auto vpositions = get_vertex_property<Vector3f>("v:point");
+        auto vnormals = get_vertex_property<Vector3f>("v:normal");
+        vpositions[_selectedVertex] += 0.1 * vnormals[_selectedVertex];
+    }
+
+    void decreaseVertex()
+    {
+        auto vpositions = get_vertex_property<Vector3f>("v:point");
+        auto vnormals = get_vertex_property<Vector3f>("v:normal");
+        vpositions[_selectedVertex] -= 0.1 * vnormals[_selectedVertex];
+    }
 
 private:
+    Surface_mesh::Vertex _selectedVertex;
 
     bool _ready;
     Eigen::AlignedBox3f _bbox;
