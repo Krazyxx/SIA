@@ -145,9 +145,15 @@ void ParticleSystem::getDerivative (VectorXd &deriv) {
     }
 }
 
+void ParticleSystem::addMass(double mass) {
+    for (Particle* particle : this->particles) {
+        particle->m += mass;
+        if (particle->m < 0) { particle->m = 0.001; }
+    }
+}
 void GravityForce::addForces() {
     for (Particle* particle : this->ps->particles) {
-        particle->f += particle->m  * this->g;
+        particle->f += particle->m * this->g;
     }
 }
 
@@ -164,7 +170,7 @@ void SpringForce::addForces() {
 
     Vector3d f = f_mass_spring + f_mass_damper;
     p0->f += f;
-    p1->f += - f;
+    p1->f += -f;
 }
 
 void AnchorForce::addForces() {
@@ -180,7 +186,9 @@ void makeGrid(ParticleSystem *psys) {
     double pmass = mass/((m + 1)*(n + 1));         // mass per particle
     double x0 = 0.3, x1 = 0.7, y0 = 0.3, y1 = 0.7; // extent of rectangle
     double dx = (x1 - x0)/m, dy = (y1 - y0)/n;     // lengths of springs
+    double d_diag = sqrt(dx*dx+dy*dy);             // lengths of diag springs
     double k = 200, d = 0.1;                       // spring constant, damping
+
     // create particles
     Particle *particles[m+1][n+1];
     for (int i = 0; i <= m; i++) {
@@ -208,7 +216,20 @@ void makeGrid(ParticleSystem *psys) {
                 Particle *p1 = particles[i][j+1];
                 psys->forces.push_back(new SpringForce(p0, p1, k, d, dy));
             }
-            // TODO: add shear springs
+
+            // Shear springs
+            if (i < m) {
+                if (j < n) {
+                    Particle *p2 = particles[i+1][j+1];
+                    double ks = (dx / d_diag) * k;
+                    psys->forces.push_back(new SpringForce(p0, p2, ks, d, d_diag));
+                }
+                if (j > 0) {
+                    Particle *p2 = particles[i+1][j-1];
+                    double ks = (dx / d_diag) * k;
+                    psys->forces.push_back(new SpringForce(p0, p2, ks, d, d_diag));
+                }
+            }
         }
     }
 }

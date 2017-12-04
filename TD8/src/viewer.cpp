@@ -207,10 +207,19 @@ void Viewer::mouseScroll(double x, double y)
  */
 void Viewer::keyPressed(int key, int action, int mods)
 {
-    if(key == GLFW_KEY_R && action == GLFW_PRESS)
+    if(key == GLFW_KEY_R && action == GLFW_PRESS) {
         loadProgram();
+    }
 }
 
 void Viewer::charPressed(int key)
 {
+    if (key == 'm') {
+        std::cerr << "decrease mass" << std::endl;
+        _psys.addMass(-0.01);
+    }
+    if (key == GLFW_KEY_M) {
+        std::cerr << "increase mass" << std::endl;
+        _psys.addMass(0.01);
+    }
 }

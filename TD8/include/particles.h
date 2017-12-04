@@ -22,13 +22,13 @@ public:
     void getState(VectorXd &state);
     void setState(const VectorXd &state);
     void getDerivative(VectorXd &deriv);
+    void addMass(double mass);
 
     std::vector<Particle*> particles;
     std::vector<Force*> forces;
 
 private:
     void updateGL(bool first);
-
     unsigned int _vao[2];
     unsigned int _vbo[2];
     uint nbSpringForces;

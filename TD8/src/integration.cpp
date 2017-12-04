@@ -3,7 +3,6 @@
 using namespace std;
 
 void explicitEulerStep (ODESystem *system, double dt) {
-    // TODO: implement this
     VectorXd state(system->getDimensions());
     VectorXd deriv(system->getDimensions());
 
