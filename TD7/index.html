@@ -37,154 +37,404 @@
 
     <div id="content">
 
-      <h1 style="text-align:center">TD6 - Shadow Volumes</h1>
-      Objectif : Mise en oeuvre de la technique des <i>shadow</i> volumes pour calculer
-      les ombres portées d'un maillage éclairé par une source ponctuelle.
+      <h1 style="text-align:center">TD7 - Interpolation poly-harmonique </h1>
 
-      <h2>1. Construction des volumes d'ombres</h2>
-      On devait d'abord implémenter la fonction <code class="inline-code">Mesh::computeShadowVolume</code>
-      qui prend en paramètre la position de la source lumineuse et retourne un nouveau maillage correspondat
-      au volume d'ombre. <br />
-      Il fallait de plus :
-      <ul>
-          <li>
-              Effectuer une transformation inverse à la position de la lumière afin de transformer dans le repère de l'objet
-          </li>
-          <li>
-              Vérifier que les quads créé était bien orienté (à l'aide du <i>culling</i>)
-          </li>
-      </ul>
+      <h2>1. Prise en main</h2>
+      L'objectif de ce TD était de mettre en oeuvre une méthode d'éléments finis pour la
+      résolution de l'équation de Laplace sur un maillage triangulaire. Cela permet plusieurs
+      application tel que la reconstruction poly-harmonique, le bouchage de trous et la déformations
+      interactive.
+
+      <h2>2. Création de la matrice Laplacienne</h2>
+      La premiére étape était de créer la matrice Laplacienne pour l'ensemble du maillage.
       <div class="highlight">
-          <pre><code class="cpp hlsl">Mesh* Mesh::computeShadowVolume(const Vector3f &lightPos)
+          <pre><code class="cpp hlsl">/// Computes the Laplacian matrix in matrix \a L using cotangent weights or the graph Laplacian if useCotWeights==false.
+void create_laplacian_matrix(const Surface_mesh& mesh, SpMat& L, bool useCotWeights)
 {
-    Vector3f L = (_transformation.inverse() * Vector4f(lightPos[0], lightPos[1], lightPos[2], 1)).head(3);
-    Mesh *mesh = new Mesh();
+    // number of vertices in mesh
+    int n = mesh.n_vertices();
+    std::vector<T> tripletList;
+    tripletList.reserve(n);
 
-    Surface_mesh::Vertex_property<Point> vertices = _halfEdgeMesh.get_vertex_property<Point>("v:point");
-    Surface_mesh::Face_property<Point> normals = _halfEdgeMesh.get_face_property<Point>("f:normal");
+    Surface_mesh::Vertex_iterator vit;
+    for (vit = mesh.vertices_begin(); vit != mesh.vertices_end(); ++vit) {
+        // halfedge circulator
+        float wii = 0.f;
+        Surface_mesh::Vertex vi = *vit;
 
-    Surface_mesh::Edge_iterator eit;
-    for(eit = _halfEdgeMesh.edges_begin(); eit != _halfEdgeMesh.edges_end(); ++eit) {
-        const Surface_mesh::Face face0 = _halfEdgeMesh.face(*eit, 0);
-        const Surface_mesh::Face face1 = _halfEdgeMesh.face(*eit, 1);
-
-        const Surface_mesh::Vertex v = _halfEdgeMesh.vertex(*eit, 0);
-        Vector3f p = Vector3f(vertices[v][0], vertices[v][1], vertices[v][2]);
-
-        Vector3f n0 = Vector3f(normals[face0][0], normals[face0][1], normals[face0][2]);
-        Vector3f n1 = Vector3f(normals[face1][0], normals[face1][1], normals[face1][2]);
-
-        float dist0 = (L - p).dot(n0);
-        float dist1 = (L - p).dot(n1);
-
-        // We check if the edge is adjacent to a lighted face and a face in the shadow
-        if (dist0 < 0 && dist1 > 0 || dist1 < 0 && dist0 > 0) {
-            Surface_mesh::Vertex v0, v1;
-            // We manage the culling
-            if (dist0 < 0 && dist1 > 0) {
-                v0 = _halfEdgeMesh.vertex(*eit, 0);
-                v1 = _halfEdgeMesh.vertex(*eit, 1);
-            } else {
-                v0 = _halfEdgeMesh.vertex(*eit, 1);
-                v1 = _halfEdgeMesh.vertex(*eit, 0);
-            }
-
-            Vector4f p0 = Vector4f(vertices[v0][0], vertices[v0][1], vertices[v0][2], 1);
-            Vector4f p1 = Vector4f(vertices[v1][0], vertices[v1][1], vertices[v1][2], 1);
-            Vector4f p2 = Vector4f(vertices[v0][0] - L[0], vertices[v0][1] - L[1], vertices[v0][2] - L[2], 0);
-            Vector4f p3 = Vector4f(vertices[v1][0] - L[0], vertices[v1][1] - L[1], vertices[v1][2] - L[2], 0);
-
-            mesh->addQuad(mesh, p0, p1, p2, p3);
-        }
+        Surface_mesh::Vertex_around_vertex_circulator vj, vj_end;
+        vj = mesh.vertices(*vit);
+        vj_end = vj;
+        do {
+            float wij = useCotWeights ? cotan_weight(mesh, vj.halfedge()) : 1.0; // need to compute the weight
+            tripletList.push_back(T(vi.idx(), (*vj).idx(), wij));
+            wii += wij;
+        } while(++vj != vj_end);
+        tripletList.push_back(T(vi.idx(), vi.idx(), -wii));
     }
 
-    return mesh;
+    L.setFromTriplets(tripletList.begin(), tripletList.end());
 }</code></pre>
       </div>
 
-      Ensuite, pour voir nos modifications, il fallait créer le mesh de l'ombrage dans la fonction
-      <code class="inline-code">Mesh::computeShadowVolume</code> :
+      <h2>3. Isolation des inconnues (ré-ordonnacement)</h2>
+      L'étape d'après consistait à isoler les inconnues en ré-ordonnant les équations et les sommets (ayant un v:mask à 1).
+
       <div class="highlight">
-          <pre><code class="cpp hlsl">void Viewer::init(int w, int h){
-    // ...
+          <pre><code class="cpp hlsl">/// Computes the permutation putting selected vertices (mask==1) first, and the others at the end.
+/// It returns the number of selected vertices.
+int create_permutation(const Surface_mesh& mesh, Permutation& perm)
+{
+    auto masks = mesh.get_vertex_property<int>("v:mask");
 
-    // Shadow Mesh
-    Vector4f lightPos = (_pointLight.getTransformationMatrix() * Vector4f(0,0,0,1));
-    Mesh* shadowMesh = mesh->computeShadowVolume(lightPos.head(3));
-    shadowMesh->setTransformationMatrix(Translation3f(0,0,2.f) * Scaling(0.5f) );
-    _shadowShapes.push_back(shadowMesh);
+    // number of vertices in mesh
+    int n = mesh.n_vertices();
+    perm.resize(n);
+
+    int nb_unknowns = 0, nb_knowns = n-1;
+    Surface_mesh::Vertex_iterator vit;
+    for (vit = mesh.vertices_begin(); vit != mesh.vertices_end(); ++vit) {
+        Surface_mesh::Vertex vi = *vit;
+        if (masks[vi] == 1) {
+            perm.indices()[vi.idx()] = nb_unknowns;
+            nb_unknowns++;
+        } else {
+            perm.indices()[vi.idx()] = nb_knowns;
+            nb_knowns--;
+        }
+    }
+
+    return nb_unknowns;
 }</code></pre>
-       </div>
-       Nous avons pour cela rajouter un _shadowShapes dans la classe  <code class="inline-code">Viewer</code>
-       <div class="highlight">
-           <pre><code class="cpp hlsl">class Viewer{
-        // ...
-    private:
-        // ...
-        std::vector<Shape*> _shadowShapes;
-};</code></pre>
-        </div>
+      </div>
 
-        Et nous avons dessiner notre maillage à l'aide du shader <code class="inline-code">_simplePrg</code>.
-        <div class="highlight">
-            <pre><code class="cpp hlsl">void Viewer::display()
+      <h2>4. Résolution du système</h2>
+      Ensuite, il fallait résoudre le système de l'équation 4. On a utiliser une factorisation
+      de Cholesky comme demandé.
+      <div class="highlight">
+          <pre><code class="cpp hlsl">/// Performs the poly-harmonic interpolation (order k) over the selected vertices (mask==1) of the vertex attributes u.
+/// For each vertex V of index i,
+///     if  mask[V]!=1 then u.col(i) is used as input constraints,
+///     otherwise, mask[V}==1, and u.col(i) is replaced by the poly-harmonic interpolation of the fixed values.
+void poly_harmonic_interpolation(const Surface_mesh& mesh, Ref<MatrixXf> u, int k)
+{
+    // Number of vertices in the mesh
+    int n = mesh.n_vertices();
+
+    // 1 - Create the sparse Laplacian matrix
+    SpMat L(n,n);
+    create_laplacian_matrix(mesh, L, true);
+
+    // 2 - Create the permutation matrix putting the fixed values at the end,
+    //     and the true unknown at the beginning
+    Permutation perm;
+    int nb_unknowns = create_permutation(mesh, perm);
+
+    // 3 - Apply the permutation to both rows (equations) and columns (unknowns),
+    //     i.e., L = P * L * P^-1
+    // multiplication à gauche par P : modification des colonnes
+    //                  droite       : modification des lignes
+    L = L.twistedBy(perm); // Equivalent to L = perm * L * perm.inverse() but faster
+
+    SpMat L00 = L.topLeftCorner(nb_unknowns, nb_unknowns);
+    SpMat L01 = L.topRightCorner(nb_unknowns, n - nb_unknowns);
+
+    // 4 - solve L * [x^T u^T]^T = 0, i.e., L00 x = - L01 * u
+    MatrixXf u_prime = perm * u.transpose();
+
+
+    SimplicialLDLT<SpMat> solver;
+    solver.compute(L00);
+    u_prime.topRows(nb_unknowns) = solver.solve(- L01 * u_prime.bottomRows(n - nb_unknowns));
+
+    // 5 - Copy back the results to u
+    u_prime  = perm.inverse() * u_prime;
+    u = u_prime.transpose();
+}</code></pre>
+      </div>
+
+      <figure>
+          <center>
+              <table>
+                  <tbody>
+                      <tr>
+                          <td>
+                              <img src="images/without_cotan_selection.png" width="300"/>
+                              <figcaption>Sélection</figcaption>
+                          </td>
+                          <td>
+                              <img src="images/without_cotan_1.png" width="300"/>
+                              <figcaption>Reconstruction harmonique</figcaption>
+                          </td>
+                      </tr>
+                  </tbody>
+              </table>
+          </center>
+      </figure>
+
+      <h2>5. Reconstruction bi-harmonique et tri-harmonique</h2>
+      Afin d'obtenir des résulats plus lisses, nous avons implémenter une reconstruction d'ordre
+      supérieur (k) en applicant l'opérateur Laplacien k fois.
+      <div class="highlight">
+          <pre><code class="cpp hlsl">void poly_harmonic_interpolation(const Surface_mesh& mesh, Ref<MatrixXf> u, int k)
 {
     // ...
 
-    _simplePrg.activate();
-    // ... Draw light source ...
-
-    // Draw shadowMesh
-    glEnable(GL_CULL_FACE);
-    glCullFace(GL_FRONT);
-    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE); // GL_LINE -> wireframe, GL_FILL -> standard
-    for(uint i=0; i<_shadowShapes.size(); ++i) {
-        glUniformMatrix4fv(_simplePrg.getUniformLocation("model_matrix"), 1, GL_FALSE, _shadowShapes[i]->getTransformationMatrix().data());
-        _shadowShapes[i]->display(&_blinnPrg);
+    // 1 - Create the sparse Laplacian matrix
+    SpMat L(n,n);
+    create_laplacian_matrix(mesh, L, true);
+    SpMat Ltmp = SpMat(L);
+    for (int i = 1; i < k; ++i) {
+        L = L * Ltmp;
     }
-    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-    glDisable(GL_CULL_FACE);
 
-    _simplePrg.deactivate();
+    // ...
 }</code></pre>
+      </div>
+
+      <figure>
+          <center>
+              <table>
+                  <tbody>
+                      <tr>
+                          <td>
+                              <img src="images/without_cotan_2.png" width="300"/>
+                              <figcaption>Reconstruction bi-harmonique</figcaption>
+                          </td>
+                          <td>
+                              <img src="images/without_cotan_3.png" width="300"/>
+                              <figcaption>Reconstruction tri-harmonique</figcaption>
+                          </td>
+                      </tr>
+                  </tbody>
+              </table>
+          </center>
+      </figure>
+
+      <h2>6. Formules des co-tangentes</h2>
+      Nous avons ensuite mis à jour la fonction du calcul de la matrice en prenant en compte les poids.
+      <div class="highlight">
+          <pre><code class="cpp hlsl">double cotan_weight(const Surface_mesh& mesh, Surface_mesh::Halfedge he)
+{
+    auto points = mesh.get_vertex_property<Point>("v:point");
+
+    Surface_mesh::Vertex pi  = mesh.from_vertex(he);                          // p(i)
+    Surface_mesh::Vertex pi1 = mesh.to_vertex(mesh.ccw_rotated_halfedge(he)); // p(j-1)
+    Surface_mesh::Vertex pj  = mesh.to_vertex(he);                            // p(j)
+    Surface_mesh::Vertex pj1 = mesh.to_vertex(mesh.cw_rotated_halfedge(he));  // p(j+1)
+
+    Vector3f vi1_i = (points[pi] - points[pi1]).normalized();
+    Vector3f vi1_j = (points[pj] - points[pi1]).normalized();
+    Vector3f vj1_i = (points[pi] - points[pj1]).normalized();
+    Vector3f vj1_j = (points[pj] - points[pj1]).normalized();
+
+    float cos_alpha = vi1_j.dot(vi1_j);
+    float sin_alpha = vi1_j.dot(vi1_j);
+    float cos_beta  = vi1_j.dot(vi1_j);
+    float sin_beta  = vi1_j.dot(vi1_j);
+
+    float cotan_alpha = cos_alpha / sin_alpha;
+    float cotan_beta = cos_beta / sin_beta;
+
+    return (cotan_alpha + cotan_beta) / 2.f;
+}</code></pre>
+      </div>
+
+      <figure>
+          <center>
+              <table>
+                  <tbody>
+                      <tr>
+                          <td>
+                              <img src="images/recons_selection.png" width="300"/>
+                              <figcaption>Sélection</figcaption>
+                          </td>
+                          <td>
+                              <img src="images/recons_1.png" width="300"/>
+                              <figcaption>Reconstruction harmonique</figcaption>
+                          </td>
+                      </tr>
+                      <tr>
+                          <td>
+                              <img src="images/recons_2.png" width="300"/>
+                              <figcaption>Reconstruction bi-harmonique</figcaption>
+                          </td>
+                          <td>
+                              <img src="images/recons_3.png" width="300"/>
+                              <figcaption>Reconstruction tri-harmonique</figcaption>
+                          </td>
+                      </tr>
+                  </tbody>
+              </table>
+          </center>
+          <figcaption>Reconstruction poly-harmonique avec coût cotangent</figcaption>
+      </figure>
+
+      <h2>7. Déformation interactive</h2>
+      Afin de pouvoir gérer les déformations de façons interactive, nous avons rajouté la possibilité
+      pour l'utiliser de sélectionner un sommets et de le déplacer à l'aide des touche 'p' et 'P'.
+      <br />
+      Nous avons donc rajouté dans le fichier mesh.h :
+      <div class="highlight">
+          <pre><code class="cpp hlsl">class Mesh : public surface_mesh::Surface_mesh
+{
+public:
+    // ...
+
+    void setSelectedVertex(Surface_mesh::Vertex vertex) { _selectedVertex = vertex; }
+    Surface_mesh::Vertex getSelectedVertex() { return _selectedVertex; }
+
+    void increaseVertex()
+    {
+        auto vpositions = get_vertex_property<Vector3f>("v:point");
+        auto vnormals = get_vertex_property<Vector3f>("v:normal");
+        vpositions[_selectedVertex] += 0.1 * vnormals[_selectedVertex];
+    }
+
+    void decreaseVertex()
+    {
+        auto vpositions = get_vertex_property<Vector3f>("v:point");
+        auto vnormals = get_vertex_property<Vector3f>("v:normal");
+        vpositions[_selectedVertex] -= 0.1 * vnormals[_selectedVertex];
+    }
+
+private:
+    Surface_mesh::Vertex _selectedVertex;
+    // ...
+};</code></pre>
         </div>
 
+      Et nous avons rajouté dans le fichier mesh_processing_app.cpp :
+      <div class="highlight">
+          <pre><code class="cpp hlsl">void MeshProcessingApp::mousePressed(GLFWwindow *window, int button, int action, int mods)
+{
+    if((mods&GLFW_MOD_CONTROL)==GLFW_MOD_CONTROL)
+    {
+        // ...
+    }
+    else if((mods&GLFW_MOD_SHIFT) == GLFW_MOD_SHIFT) {
+        if(selectVertex(_lastMousePos.cast<float>()))
+        {
+            _offsettingMode = true;
+        }
+        else
+        {
+            _offsettingMode = false;
+        }
+    }
+    else {
+        // ...
+    }
+}
+void MeshProcessingApp::charPressed(int key)
+{
+    else if(key==GLFW_KEY_P)
+    {
+        if (_offsettingMode) {
+            _mesh->increaseVertex();
+            _mesh->updateVBO();
+        }
+    }
+    else if(key=='p')
+    {
+        if (_offsettingMode) {
+            _mesh->decreaseVertex();
+            _mesh->updateVBO();
+        }
+    }
+    else if(key >= GLFW_KEY_1 && key <= GLFW_KEY_3)
+    {
+        int k = key-GLFW_KEY_1+1; // k = 1, 2 ou 3 (harmonique, bi-harmonique, tri-harmonique
+        // TODO appeler _mesh->poly_harmonic_interpolation avec l'attribut que l'on souhaite reconstruire/interpoler,
+        //      et mettre à jour le maillage en fonction de ce qui a été modifié
+        auto mask = _mesh->get_vertex_property<int>("v:mask");
+        mask[_mesh->getSelectedVertex()] = 0;
+        poly_harmonic_interpolation(*_mesh, _mesh->positions(), k);
+        _mesh->updateAll();
+    }
+    else
+    {
+        Viewer::charPressed(key);
+    }
+}
 
-        <figure>
-            <center>
-                <table>
-                    <tbody>
-                        <tr>
-                            <td>
-                                <img src="images/1. GL_BACK.png" width="300"/>
-                                <figcaption>GL_BACK</figcaption>
-                            </td>
-                            <td>
-                                <img src="images/1. GL_FRONT.png" width="300"/>
-                                <figcaption>GL_Front</figcaption>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>
-                                <img src="images/1. sphere.png" width="300"/>
-                                <figcaption>Sphere</figcaption>
-                            </td>
-                            <td>
-                                <img src="images/1. tw.png" width="300"/>
-                                <figcaption>Tw</figcaption>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-            </center>
-        </figure>
-
-      <h2>2. Comptage des entrées et sorties</h2>
+bool MeshProcessingApp::selectVertex(const Vector2f &p) const {
+    Hit hit;
+    if(pickAt(p, hit)) {
+        int clostest_id = 0;
+        hit.baryCoords().maxCoeff(&clostest_id);
+        Surface_mesh::Vertex closest_v(_mesh->faceIndices()(clostest_id, hit.faceId()));
+        auto mask = _mesh->get_vertex_property<int>("v:mask");
+        if (mask[closest_v] == 1) {
+            // The vertice is selected
+            _mesh->setSelectedVertex(closest_v);
+            return true;
+        }
+        return false;
+    }
+}</code></pre>
+      </div>
 
 
+      <figure>
+          <center>
+              <table>
+                  <tbody>
+                      <tr>
+                          <td>
+                              <img src="images/increase_selection.png" width="300"/>
+                              <figcaption>Sélection</figcaption>
+                          </td>
+                          <td>
+                              <img src="images/increase_1.png" width="300"/>
+                              <figcaption>Reconstruction harmonique (avec cotangente)</figcaption>
+                          </td>
+                      </tr>
+                      <tr>
+                          <td>
+                              <img src="images/increase_2.png" width="300"/>
+                              <figcaption>Reconstruction bi-harmonique (avec cotangente)</figcaption>
+                          </td>
+                          <td>
+                              <img src="images/increase_3.png" width="300"/>
+                              <figcaption>Reconstruction tri-harmonique (avec cotangente)</figcaption>
+                          </td>
+                      </tr>
+                  </tbody>
+              </table>
+          </center>
+          <figcaption>Reconstruction poly-harmonique avec un offset positif (avec coût cotangent)</figcaption>
+      </figure>
 
-
-
+      <figure>
+          <center>
+              <table>
+                  <tbody>
+                      <tr>
+                          <td>
+                              <img src="images/decrease_selection.png" width="300"/>
+                              <figcaption>Sélection</figcaption>
+                          </td>
+                          <td>
+                              <img src="images/decrease_1.png" width="300"/>
+                              <figcaption>Reconstruction harmonique</figcaption>
+                          </td>
+                      </tr>
+                      <tr>
+                          <td>
+                              <img src="images/decrease_2.png" width="300"/>
+                              <figcaption>Reconstruction bi-harmonique</figcaption>
+                          </td>
+                          <td>
+                              <img src="images/decrease_3.png" width="300"/>
+                              <figcaption>Reconstruction tri-harmonique</figcaption>
+                          </td>
+                      </tr>
+                  </tbody>
+              </table>
+          </center>
+          <figcaption>Reconstruction poly-harmonique avec un offset négatif (avec coût cotangent)</figcaption>
+      </figure>
 
 
     <script type="text/javascript">

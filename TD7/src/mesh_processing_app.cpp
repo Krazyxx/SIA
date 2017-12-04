@@ -122,7 +122,9 @@ void MeshProcessingApp::mousePressed(GLFWwindow *window, int button, int action,
       }
   }
   else
-    Viewer::mousePressed(window,button,action,mods);
+  {
+      Viewer::mousePressed(window,button,action,mods);
+  }
 }
 
 /*!
@@ -190,7 +192,9 @@ void MeshProcessingApp::charPressed(int key)
     _mesh->updateAll();
   }
   else
-    Viewer::charPressed(key);
+  {
+      Viewer::charPressed(key);
+  }
 }
 
 
