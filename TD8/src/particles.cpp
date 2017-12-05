@@ -102,7 +102,8 @@ void ParticleSystem::display(Shader *shader) {
 }
 
 void ParticleSystem::step(double dt) {
-    explicitEulerStep(this, dt);
+    //explicitEulerStep(this, dt);
+    midPointStep(this, dt);
     updateGL(false);
 }
 
