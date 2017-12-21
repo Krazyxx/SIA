@@ -1,0 +1,285 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>SIA - Gouraud Jimmy</title>
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/github-gist.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+    <script>hljs.initHighlightingOnLoad();</script>
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+    <script src="../js/toc.min.js"></script>
+
+    <script type="text/javascript" async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+	MathJax.Hub.Config({
+	tex2jax: {
+        inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+        displayMath: [ ['$$','$$'], ["\\[","\\]"] ],
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre']
+	}
+	});
+	MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax(), i;
+        for(i=0; i < all.length; i += 1) {
+		     all[i].SourceElement().parentNode.className += ' has-jax';
+		     }
+		     });
+    </script>
+
+    <link rel="stylesheet" href="../css/style.css">
+
+  </head>
+
+  <body>
+
+    <div id="toc"></div>
+
+    <div id="content">
+
+      <h1 style="text-align:center">TD8 - Système masse-ressort </h1>
+
+      <h2>1. et 2. Complétion des méthodes AddFOrces</h2>
+      Aprés avoir analysé l'architecture du programme (partie 1.), nous avons implémenté
+      les méthodes <code class="inline-code">addForces</code> pour les classes <code class="inline-code">GravityForce</code>,
+      <code class="inline-code">DragForce</code> et <code class="inline-code">SpringForce</code> en nous aidant
+      des diapos du cours.
+      <br />
+      Dans le fichier <code class="inline-code">particles.cpp</code> :
+      <div class="highlight">
+          <pre><code class="cpp hlsl">void GravityForce::addForces() {
+    for (Particle* particle : this->ps->particles) {
+        particle->f += particle->m * this->g;
+    }
+}
+
+void DragForce::addForces() {
+    for (Particle* particle : this->ps->particles) {
+        particle->f += - this->kd * particle->v;
+    }
+}
+
+void SpringForce::addForces() {
+    Vector3d l = p0->x - p1->x;
+    Vector3d f_mass_spring = - ks * (l.norm() - l0) * (l / l.norm());
+    Vector3d f_mass_damper = - kd * (p0->v - p1->v).dot(l) / l.norm() * (l / l.norm());
+
+    Vector3d f = f_mass_spring + f_mass_damper;
+    p0->f += f;
+    p1->f += -f;
+}</code></pre>
+      </div>
+
+      <h2>3. Implémentation de méthode de la classe <code class="inline-code">ParticleSystem</code></h2>
+
+      Il fallait ensuite compléter les méthodes <code class="inline-code">getDimensions</code>,
+      <code class="inline-code">get</code>/<code class="inline-code">setState</code>
+      et <code class="inline-code">getDerivative</code> de la classe <code class="inline-code">ParticleSystem</code>.
+      Nous nous sommes aidés de la méthode <code class="inline-code">segment</code> des vecteurs d'<i>Eigen</i>.
+      <br />
+      Dans le fichier <code class="inline-code">particles.cpp</code> :
+      <div class="highlight">
+          <pre><code class="cpp hlsl">int ParticleSystem::getDimensions() {
+    return 6 * this->particles.size();
+}
+
+void ParticleSystem::getState (VectorXd &state) {
+    int offset = 0;
+    for (Particle* particle : this->particles) {
+        state.segment(offset, 3)   = particle->x;
+        state.segment(offset+3, 3) = particle->v;
+        offset += 6;
+    }
+}
+
+void ParticleSystem::setState (const VectorXd &state) {
+    int offset = 0;
+    for (Particle* particle : this->particles) {
+        particle->x = state.segment(offset, 3);
+        particle->v = state.segment(offset+3, 3);
+        offset += 6;
+    }
+}
+
+void ParticleSystem::getDerivative (VectorXd &deriv) {
+    for (Particle* particle : this->particles) {
+        particle->f = Vector3d(0,0,0);
+    }
+
+    for (Force* force : this->forces) {
+        force->addForces();
+    }
+
+    int offset = 0;
+    for (Particle* particle : this->particles) {
+        deriv.segment(offset, 3) = particle->v;
+        deriv.segment(offset+3, 3) = particle->f / particle->m;
+        offset += 6;
+    }
+}</code></pre>
+      </div>
+
+      <h2>4. Implémentation de la fonction <code class="inline-code">explicitEulerStep</code></h2>
+      Nous avons ensuite compléter <code class="inline-code">explicitEulerStep</code> ainsi que
+      la méthode <code class="inline-code">ParticleSystem::step</code>.
+      <br />
+      Dans le fichier <code class="inline-code">integration.cpp</code> :
+
+      <div class="highlight">
+          <pre><code class="cpp hlsl">void explicitEulerStep (ODESystem *system, double dt) {
+    VectorXd state(system->getDimensions());
+    VectorXd deriv(system->getDimensions());
+
+    system->getState(state);
+    system->getDerivative(deriv);
+
+    VectorXd newState(system->getDimensions());
+    newState = state + dt * deriv;
+
+    system->setState(newState);
+}</code></pre>
+     </div>
+
+     Dans le fichier <code class="inline-code">particles.cpp</code> :
+
+     <div class="highlight">
+         <pre><code class="cpp hlsl">void ParticleSystem::step(double dt) {
+    explicitEulerStep(this, dt);
+    updateGL(false);
+}</code></pre>
+    </div>
+
+<h2>5. Manipulation des différents paramètres des ressorts</h2>
+On peut augmenter (respectivement diminuer) la masse dynamiquement en appuyant sur 'P'
+(respectivement 'p') :
+<figure>
+    <center>
+        <table>
+            <tbody>
+                <tr>
+                    <td>
+                        <img src="images/5. without rigidity.png" width="300"/>
+                        <figcaption>Tissue au repos</figcaption>
+                    </td>
+                    <td>
+                        <img src="images/5. without rigidity with increase mass.png" width="300"/>
+                        <figcaption>Tissue au repos avec augmentation de la masse</figcaption>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </center>
+</figure>
+
+
+<h2>6. Augmenter la stabilité du tissue</h2>
+
+Dans le fichier <code class="inline-code">particles.cpp</code> :
+    <div class="highlight">
+        <pre><code class="cpp hlsl">void makeGrid(ParticleSystem *psys) {
+    // Parameter
+    // ...
+    double dx = ..., dy = ...;           // lengths of springs
+    double d_diag = sqrt(dx*dx+dy*dy);   // lengths of diag springs
+
+    // create springs
+    for (int i = 0; i <= m; i++) {
+        for (int j = 0; j <= n; j++) {
+            Particle *p0 = particles[i][j];
+            // ...
+
+            // Shear springs
+            if (i < m) {
+                if (j < n) {
+                    Particle *p2 = particles[i+1][j+1];
+                    double ks = (dx / d_diag) * k;
+                    psys->forces.push_back(new SpringForce(p0, p2, ks, d, d_diag));
+                }
+                if (j > 0) {
+                    Particle *p2 = particles[i+1][j-1];
+                    double ks = (dx / d_diag) * k;
+                    psys->forces.push_back(new SpringForce(p0, p2, ks, d, d_diag));
+                }
+            }
+        }
+    }
+}</code></pre>
+    </div>
+
+    <figure>
+        <center>
+            <table>
+                <tbody>
+                    <tr>
+                        <td>
+                            <img src="images/6. Rigidity.png" width="300"/>
+                            <figcaption>Augmentation de la rigidité</figcaption>
+                        </td>
+                        <td>
+                            <img src="images/6. Rigidity - increase Mass.png" width="300"/>
+                            <figcaption>Augmentation de la rigidité et de la masse</figcaption>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </center>
+    </figure>
+
+    <h2>7. Méthode du point du milieu </h2>
+    Nous avons ensuite implémenter la méthode du point de milieu.
+
+    Dans le fichier integration.cpp :
+    <div class="highlight">
+        <pre><code class="cpp hlsl">void midPointStep (ODESystem *system, double dt) {
+    // a) Calculer une itération d'Euler
+    VectorXd deriv(system->getDimensions());
+    system->getDerivative(deriv);
+    VectorXd dx(system->getDimensions());
+    dx = dt * deriv;
+
+    // b) Évaluer la dérivée à mi-distance
+    VectorXd state(system->getDimensions());
+    system->getState(state);
+    VectorXd fmid(system->getDimensions());
+    fmid = state + (dx / 2.f);
+    system->setState(fmid);
+
+    // c) L'utiliser pour mettre à jour x
+    VectorXd newState(system->getDimensions());
+    newState = state + dt * deriv;
+    system->setState(newState);
+}</code></pre>
+        </div>
+
+Et dans le fichier particles.cpp :
+      <div class="highlight">
+          <pre><code class="cpp hlsl">void ParticleSystem::step(double dt) {
+    //explicitEulerStep(this, dt);
+    midPointStep(this, dt);
+    updateGL(false);
+}</code></pre>
+      </div>
+
+
+    <script type="text/javascript">
+      $('#toc').toc({
+      'selectors': 'h2,h3,h4', //elements to use as headings
+      'container': 'body', //element to find all selectors in
+      'smoothScrolling': true, //enable or disable smooth scrolling on click
+      'prefix': 'toc', //prefix for anchor tags and class names
+      'onHighlight': function(el) {}, //called when a new section is highlighted
+      'highlightOnScroll': true, //add class to heading that is currently in focus
+      'highlightOffset': 100, //offset to trigger the next headline
+      'anchorName': function(i, heading, prefix) { //custom function for anchor name
+      return prefix+i;
+      },
+      'headerText': function(i, heading, $heading) { //custom function building the header-item text
+      return $heading.text();
+      },
+      'itemClass': function(i, heading, $heading, prefix) { // custom function for item class
+      return $heading[0].tagName.toLowerCase();
+      }
+      });
+    </script>
+
+  </body>
